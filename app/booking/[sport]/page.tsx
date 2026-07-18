@@ -95,21 +95,24 @@ export default function BookingPage() {
   // 2. Fetch courts & prices from Supabase
   useEffect(() => {
     const loadSportDetails = async () => {
+      console.log('DEBUG: loadSportDetails started for sportParam:', sportParam);
       setLoading(true);
       try {
         // Fetch pricing
-        const { data: priceData } = await supabase
+        const { data: priceData, error: priceErr } = await supabase
           .from('sport_prices')
           .select('*')
           .eq('sport_type', sportParam)
           .maybeSingle();
+
+        console.log('DEBUG: priceData:', priceData, 'error:', priceErr);
 
         if (priceData) {
           setPriceConfig(priceData);
         }
 
         // Fetch venue
-        const { data: dataVenue } = await supabase
+        const { data: dataVenue, error: venueErr } = await supabase
           .from('venues')
           .select('*')
           .eq('sport_type', sportParam)
@@ -117,8 +120,10 @@ export default function BookingPage() {
           .maybeSingle();
         const venueData = dataVenue as any;
 
+        console.log('DEBUG: venueData:', venueData, 'error:', venueErr);
+
         if (venueData) {
-          const { data: dataCourts } = await supabase
+          const { data: dataCourts, error: courtsErr } = await supabase
             .from('courts')
             .select('*')
             .eq('venue_id', venueData.id)
@@ -126,17 +131,22 @@ export default function BookingPage() {
             .order('sort_order', { ascending: true });
           const courtData = dataCourts as any[] | null;
 
+          console.log('DEBUG: courtData:', courtData, 'error:', courtsErr);
+
           if (courtData) {
             setCourts(courtData);
             if (courtData.length > 0) {
               setSelectedCourtId(courtData[0].id);
             }
           }
+        } else {
+          console.log('DEBUG: No active venue found for sportParam:', sportParam);
         }
       } catch (err) {
         console.error('Error loading sport details:', err);
       } finally {
         setLoading(false);
+        console.log('DEBUG: loadSportDetails finished. loading state set to false');
       }
     };
 
