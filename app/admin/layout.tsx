@@ -62,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Branding header */}
         <div className="h-16 flex items-center px-6 border-b border-outline-variant">
           <Link href="/admin/dashboard" className="flex flex-col select-none">
-            <span className="font-headline-md text-lg font-bold text-[#0052ff] tracking-tight leading-none">ActiveGrid</span>
+            <span className="font-headline-md text-lg font-bold text-[#0052ff] tracking-tight leading-none">Holiday Sport</span>
             <span className="text-[9px] font-black text-on-surface-variant/70 tracking-widest mt-1 font-label-caps leading-none uppercase">
               FACILITY MGMT
             </span>
@@ -128,7 +128,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }`}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-outline-variant">
           <div className="flex flex-col select-none">
-            <span className="font-headline-md text-lg font-bold text-[#0052ff] tracking-tight">ActiveGrid</span>
+            <span className="font-headline-md text-lg font-bold text-[#0052ff] tracking-tight">Holiday Sport</span>
             <span className="text-[8px] font-black text-on-surface-variant/70 tracking-wider mt-0.5 font-label-caps">
               FACILITY MGMT
             </span>

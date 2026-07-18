@@ -21,8 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ActiveGrid | Booking Lapangan Cepat & Mudah",
-  description: "Platform booking sarana olahraga terpercaya. Membantu komunitas atletik urban beraktivitas dengan lebih efisien.",
+  title: "Holiday Sport | Reservation Online Lapangan Olahraga",
+  description: "Platform pemesanan sarana olahraga terpercaya. Memudahkan reservasi lapangan futsal, badminton, dan tenis meja secara instan.",
 };
 
 export default function RootLayout({

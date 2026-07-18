@@ -30,4 +30,4 @@ export const ADMIN_MENU = [
 ] as const;
 
 /** Admin WhatsApp Number for customer chat support confirmations */
-export const ADMIN_WHATSAPP = '6281234567890'; // Ubah ke nomor WhatsApp Admin ActiveGrid Anda (gunakan kode negara, mis. 628xxx)
+export const ADMIN_WHATSAPP = '6281234567890'; // Ubah ke nomor WhatsApp Admin Holiday Sport Anda (gunakan kode negara, mis. 628xxx)

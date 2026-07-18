@@ -71,7 +71,7 @@ export default function Home() {
       <header className={`bg-surface dark:bg-background docked full-width top-0 border-b border-outline-variant dark:border-outline flat no-shadows z-50 sticky transition-all duration-300 ${isScrolled ? 'shadow-md' : ''}`}>
         <nav className="flex justify-between items-center px-container-margin w-full h-16 max-w-7xl mx-auto">
           <div className="flex items-center gap-8">
-            <span className="font-headline-md text-headline-md font-bold text-[#0052ff] dark:text-[#0052ff]">ActiveGrid</span>
+            <span className="font-headline-md text-headline-md font-bold text-[#0052ff] dark:text-[#0052ff]">Holiday Sport</span>
           </div>
           <div className="hidden md:flex gap-10">
             <a className="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200" href="#">Futsal</a>
@@ -98,11 +98,11 @@ export default function Home() {
               <span className="inline-block py-1 px-3 bg-secondary-container text-on-secondary-container font-label-caps text-label-caps rounded-sm uppercase tracking-wider">
                 Premium Facility
               </span>
-              <h1 className="font-headline-xl text-headline-xl md:text-[64px] leading-tight text-on-surface">
-                Booking Lapangan <br /><span className="text-primary">Cepat &amp; Mudah</span>
+              <h1 className="font-headline-xl text-headline-xl md:text-[60px] leading-none text-on-surface font-extrabold select-none">
+                Holiday Sport <br /><span className="text-[#0052ff] dark:text-[#0052ff] font-black">Reservation Online</span>
               </h1>
               <p className="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
-                Akses ribuan jadwal lapangan secara real-time. Pilih waktu favoritmu dan mulai bertanding hanya dengan beberapa klik.
+                Platform reservasi lapangan futsal, badminton, dan tenis meja terlengkap. Pilih jadwal, bayar instan, dan amankan slot permainan Anda dalam hitungan detik.
               </p>
               <div className="pt-stack-md flex gap-4">
                 <Link href="/booking/badminton" className="px-8 py-4 bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-standard text-white flex items-center justify-center cursor-pointer">
@@ -228,19 +228,19 @@ export default function Home() {
       <footer className="bg-surface-container-high dark:bg-inverse-surface full-width">
         <div className="w-full py-stack-lg px-container-margin flex flex-col md:flex-row justify-between items-start gap-stack-md max-w-7xl mx-auto">
           <div className="space-y-4 max-w-xs">
-            <span className="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">ActiveGrid</span>
+            <span className="font-headline-sm text-headline-sm font-bold text-[#0052ff] dark:text-[#0052ff]">Holiday Sport</span>
             <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant text-white">
-              Platform booking sarana olahraga terpercaya. Membantu komunitas atletik urban beraktivitas dengan lebih efisien.
+              Platform pemesanan sarana olahraga terpercaya. Memudahkan reservasi lapangan favorit Anda secara instan, aman, dan transparan.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full md:w-auto">
             <div className="flex flex-col gap-2">
               <span className="font-label-caps text-label-caps text-primary mb-2">LOKASI</span>
-              <a className="font-body-sm text-body-sm text-on-surface dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed underline transition-all duration-200" href="#">Jl. Olahraga No. 123</a>
+              <a className="font-body-sm text-body-sm text-on-surface dark:text-inverse-on-surface hover:text-[#0052ff] underline transition-all duration-200" href="#">Jl. Olahraga No. 123</a>
             </div>
             <div className="flex flex-col gap-2">
               <span className="font-label-caps text-label-caps text-primary mb-2">KONTAK</span>
-              <a className="font-body-sm text-body-sm text-on-surface dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed underline transition-all duration-200" href="https://wa.me/081234567890">WhatsApp: 0812-3456-7890</a>
+              <a className="font-body-sm text-body-sm text-on-surface dark:text-inverse-on-surface hover:text-[#0052ff] underline transition-all duration-200" href="https://wa.me/6281234567890">WhatsApp: 0812-3456-7890</a>
             </div>
             <div className="flex flex-col gap-2">
               <span className="font-label-caps text-label-caps text-primary mb-2">JAM OPERASIONAL</span>
@@ -250,7 +250,7 @@ export default function Home() {
         </div>
         <div className="w-full border-t border-outline-variant/30 py-6 px-container-margin text-center">
           <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant opacity-75 text-white">
-            © 2024 ActiveGrid. All rights reserved.
+            © 2024 Holiday Sport. All rights reserved.
           </p>
         </div>
       </footer>

@@ -871,7 +871,7 @@ export default function BookingPage() {
                   <a href="#" className="text-[#0052ff] hover:underline font-semibold">
                     Syarat &amp; Ketentuan
                   </a>{' '}
-                  ActiveGrid.
+                  Holiday Sport.
                 </p>
               </div>
 
@@ -881,9 +881,9 @@ export default function BookingPage() {
           <footer className="bg-[#191b25] text-[#8e91a1] w-full mt-auto">
             <div className="max-w-7xl mx-auto px-container-margin py-8 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-center md:text-left space-y-1">
-                <span className="font-headline-sm font-bold text-white tracking-wider block">ACTIVEGRID</span>
+                <span className="font-headline-sm font-bold text-white tracking-wider block">HOLIDAY SPORT</span>
                 <span className="text-[11px] block text-slate-400 select-none">
-                  © 2024 ActiveGrid. Performance in Motion.
+                  © 2024 Holiday Sport. All rights reserved.
                 </span>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center text-xs">
@@ -971,7 +971,7 @@ export default function BookingPage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-headline-md text-base font-bold text-on-surface">ActiveGrid Premium Booking</h3>
+                <h3 className="font-headline-md text-base font-bold text-on-surface">Holiday Sport Premium Booking</h3>
                 <div className="bg-[#f0f4ff] border border-[#0052ff]/20 rounded-xl p-3 inline-block">
                   <span className="text-[10px] text-on-surface-variant font-medium block">NOMINAL TRANSFER (TERMASUK KODE UNIK)</span>
                   <span className="font-price-display text-lg text-[#003ec7] font-black block mt-0.5 select-all">
@@ -1124,7 +1124,7 @@ export default function BookingPage() {
             <div className="space-y-3 pt-4">
               <a
                 href={`https://wa.me/${adminWhatsappNum}?text=${encodeURIComponent(
-                  `Halo Admin ActiveGrid, saya telah melakukan pemesanan lapangan olahraga:\n\n` +
+                  `Halo Admin Holiday Sport, saya telah melakukan pemesanan lapangan olahraga:\n\n` +
                   `- *Nomor Booking*: ${bookingRef}\n` +
                   `- *Pelacakan Status*: ${typeof window !== 'undefined' ? `${window.location.origin}/booking/track/${bookingRef}` : ''}\n` +
                   `- *Olahraga*: ${sportDisplayName(sportParam)}\n` +

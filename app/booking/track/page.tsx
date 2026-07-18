@@ -121,7 +121,7 @@ export default function TrackSearchPage() {
 
       {/* Footer */}
       <footer className="py-4 text-center text-xs text-on-surface-variant/60 shrink-0 border-t border-outline-variant bg-white select-none">
-        &copy; {new Date().getFullYear()} ActiveGrid Arena. All rights reserved.
+        &copy; {new Date().getFullYear()} Holiday Sport Arena. All rights reserved.
       </footer>
     </div>
   );

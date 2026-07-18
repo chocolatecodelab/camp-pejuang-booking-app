@@ -62,12 +62,12 @@ export default function AdminLoginPage() {
       <header className="w-full bg-[#f2f4fc] px-6 sm:px-12 h-16 flex items-center justify-between border-b border-transparent select-none shrink-0">
         <Link href="/" className="flex items-center gap-1">
           <span className="font-headline-md text-[#0047e1] font-black text-sm uppercase tracking-tight select-none">
-            ActiveGrid
+            Holiday Sport
           </span>
         </Link>
         <button 
           type="button" 
-          onClick={() => alert('Butuh bantuan? Silakan hubungi tim IT ActiveGrid untuk panduan operasional.')}
+          onClick={() => alert('Butuh bantuan? Silakan hubungi tim IT Holiday Sport untuk panduan operasional.')}
           className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors flex items-center justify-center"
           title="Bantuan"
         >
@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
                 Admin Login
               </h2>
               <p className="text-[11px] text-slate-500 leading-relaxed px-4">
-                Welcome back. Please enter your credentials to access the ActiveGrid command center.
+                Welcome back. Please enter your credentials to access the Holiday Sport command center.
               </p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function AdminLoginPage() {
                 <input
                   type="email"
                   id="email"
-                  placeholder="admin@activegrid.com"
+                  placeholder="admin@holidaysport.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full py-2.5 text-xs text-slate-800 placeholder-slate-400 outline-none bg-transparent"
@@ -211,11 +211,11 @@ export default function AdminLoginPage() {
       {/* 3. BOTTOM FOOTER BAR */}
       <footer className="w-full bg-[#f2f4fc] border-t border-[#e2e4ee] px-6 sm:px-12 py-4 flex flex-col sm:flex-row justify-between items-center text-[10px] text-slate-500 gap-2 shrink-0 select-none font-medium">
         <div>
-          <span className="font-extrabold text-[#0047e1]">ActiveGrid</span>
-          <span className="ml-1">&copy; 2024 ActiveGrid. All rights reserved.</span>
+          <span className="font-extrabold text-[#0047e1]">Holiday Sport</span>
+          <span className="ml-1">&copy; 2024 Holiday Sport. All rights reserved.</span>
         </div>
         <div className="flex gap-4 sm:gap-6 font-semibold">
-          <button type="button" onClick={() => alert('Kebijakan Privasi ActiveGrid.')} className="hover:underline">Privacy Policy</button>
+          <button type="button" onClick={() => alert('Kebijakan Privasi Holiday Sport.')} className="hover:underline">Privacy Policy</button>
           <button type="button" onClick={() => alert('Syarat & Ketentuan Layanan.')} className="hover:underline">Terms of Service</button>
           <button type="button" onClick={() => alert('Sistem Keamanan Portal.')} className="hover:underline">Security</button>
         </div>
