@@ -72,8 +72,7 @@ export default function AdminTransactionsPage() {
         .select('*, courts(*)')
         .order('created_at', { ascending: false });
       const bookingsData = dataList as any[] | null;
-
-      if (bookingsData && !error) {
+      if (bookingsData && bookingsData.length > 0 && !error) {
         // Fetch slots
         const bookingIds = bookingsData.map(b => b.id);
         const { data: dataSlots } = await supabase
@@ -88,6 +87,8 @@ export default function AdminTransactionsPage() {
         }));
 
         setBookings(fullBookings as any);
+      } else {
+        setBookings([]);
       }
     } catch (err) {
       console.error('Error fetching bookings:', err);

@@ -72,8 +72,7 @@ export default function AdminDashboardPage() {
           .order('created_at', { ascending: false })
           .limit(10);
         const bookingsList = dataList as any[] | null;
-
-        if (bookingsList) {
+        if (bookingsList && bookingsList.length > 0) {
           // Fetch slots for these bookings to show range
           const bookingIds = bookingsList.map(b => b.id);
           const { data: dataSlots } = await supabase
@@ -88,6 +87,8 @@ export default function AdminDashboardPage() {
           }));
 
           setRecentBookings(fullBookings as any);
+        } else {
+          setRecentBookings([]);
         }
 
         // 4. Fetch sport booking distribution (all time or current month)

@@ -86,8 +86,7 @@ export default function AdminScheduleCalendarPage() {
           .in('court_id', courtIds)
           .not('status', 'in', '("cancelled","expired")');
         const bookingsList = dataList as any[] | null;
-
-        if (bookingsList) {
+        if (bookingsList && bookingsList.length > 0) {
           // Fetch slots for bookings
           const bookingIds = bookingsList.map(b => b.id);
           const { data: dataSlots } = await supabase
