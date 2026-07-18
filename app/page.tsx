@@ -73,10 +73,19 @@ export default function Home() {
           <div className="flex items-center gap-8">
             <span className="font-headline-md text-headline-md font-bold text-[#0052ff] dark:text-[#0052ff]">Holiday Sport</span>
           </div>
-          <div className="hidden md:flex gap-10">
-            <a className="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200" href="#">Futsal</a>
-            <a className="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200" href="#">Badminton</a>
-            <a className="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200" href="#">Table Tennis</a>
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex gap-8">
+              <Link className="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200" href="/booking/futsal">Futsal</Link>
+              <Link className="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200" href="/booking/badminton">Badminton</Link>
+              <Link className="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200" href="/booking/tenis-meja">Table Tennis</Link>
+            </div>
+            <Link 
+              href="/booking/track" 
+              className="px-4 py-2 border border-[#0052ff] text-[#0052ff] hover:bg-[#0052ff]/5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-base">search</span>
+              Lacak Pemesanan
+            </Link>
           </div>
         </nav>
       </header>

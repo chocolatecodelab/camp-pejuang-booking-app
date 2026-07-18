@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import Swal from 'sweetalert2';
 import type { BookingWithDetails, Court, SportPrice } from '@/lib/supabase/types';
 import { HOURS } from '@/lib/data/constants';
 import {
@@ -565,81 +566,112 @@ export default function AdminTransactionsPage() {
                    </span>
                    <div className="grid grid-cols-2 gap-2">
                      <button
-                       type="button"
-                       onClick={async () => {
-                         if (confirm('Setujui pembayaran ini?')) {
-                           try {
-                             const { error } = await (supabase as any)
-                               .from('bookings')
-                               .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
-                               .eq('id', selectedBooking.id);
-                             if (error) throw error;
+                        type="button"
+                        onClick={() => {
+                          Swal.fire({
+                            title: 'Setujui Pembayaran?',
+                            text: 'Apakah Anda yakin ingin menyetujui bukti pembayaran ini? Status booking akan diubah menjadi Confirmed dan Anda akan diarahkan ke WhatsApp pemesan.',
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#00c853',
+                            cancelButtonColor: '#ff3b30',
+                            confirmButtonText: 'Ya, Setujui!',
+                            cancelButtonText: 'Batal'
+                          }).then(async (result) => {
+                            if (result.isConfirmed) {
+                              try {
+                                const { error } = await (supabase as any)
+                                  .from('bookings')
+                                  .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+                                  .eq('id', selectedBooking.id);
+                                if (error) throw error;
 
-                             // WhatsApp redirect for approval
-                             const waNum = selectedBooking.whatsapp_number.replace(/[^0-9]/g, '');
-                             const trackingUrl = typeof window !== 'undefined' 
-                               ? `${window.location.origin}/booking/track/${selectedBooking.booking_code}?wa=${waNum}` 
-                               : '';
-                             const waMsg = `Halo ${selectedBooking.customer_name}, bukti pembayaran sewa lapangan olahraga Anda untuk booking *${selectedBooking.booking_code}* telah **DISETUJUI** (Lunas). Selamat berolahraga! 🚀\n\nLacak pemesanan Anda: ${trackingUrl}`;
-                             window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`, '_blank');
+                                // WhatsApp redirect for approval
+                                const waNum = selectedBooking.whatsapp_number.replace(/[^0-9]/g, '');
+                                const trackingUrl = typeof window !== 'undefined' 
+                                  ? `${window.location.origin}/booking/track/${selectedBooking.booking_code}?wa=${waNum}` 
+                                  : '';
+                                const waMsg = `Halo ${selectedBooking.customer_name}, bukti pembayaran sewa lapangan olahraga Anda untuk booking *${selectedBooking.booking_code}* telah **DISETUJUI** (Lunas). Selamat berolahraga! 🚀\n\nLacak pemesanan Anda: ${trackingUrl}`;
+                                window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`, '_blank');
 
-                             setIsModalOpen(false);
-                             fetchBookings();
-                           } catch (err) {
-                             console.error(err);
-                             alert('Gagal menyetujui.');
-                           }
-                         }
-                       }}
-                       className="py-2 px-3 bg-[#00c853] hover:bg-[#00a844] text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-sm"
-                     >
-                       <span className="material-symbols-outlined text-sm">check_circle</span>
-                       Setujui
-                     </button>
-                     <button
-                       type="button"
-                       onClick={async () => {
-                         const reason = prompt('Masukkan alasan penolakan (mis. Bukti transfer tidak valid/salah nominal):');
-                         if (reason !== null) {
-                           try {
-                             // 1. Delete associated slots first to free up schedule
-                             const { error: delSlotsErr } = await (supabase as any)
-                               .from('booking_slots')
-                               .delete()
-                               .eq('booking_id', selectedBooking.id);
-                             if (delSlotsErr) throw delSlotsErr;
+                                Swal.fire('Berhasil!', 'Pembayaran telah disetujui.', 'success');
+                                setIsModalOpen(false);
+                                fetchBookings();
+                              } catch (err) {
+                                console.error(err);
+                                Swal.fire('Gagal!', 'Gagal menyetujui pembayaran.', 'error');
+                              }
+                            }
+                          });
+                        }}
+                        className="py-2 px-3 bg-[#00c853] hover:bg-[#00a844] text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                        Setujui
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          Swal.fire({
+                            title: 'Tolak Pembayaran?',
+                            text: 'Masukkan alasan penolakan bukti transfer ini:',
+                            input: 'text',
+                            inputPlaceholder: 'Contoh: Bukti transfer tidak valid / salah nominal',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#ff3b30',
+                            cancelButtonColor: '#7a7a7a',
+                            confirmButtonText: 'Ya, Tolak!',
+                            cancelButtonText: 'Batal',
+                            inputValidator: (value) => {
+                              if (!value) {
+                                return 'Alasan penolakan harus diisi!';
+                              }
+                            }
+                          }).then(async (result) => {
+                            if (result.isConfirmed && result.value) {
+                              const reason = result.value;
+                              try {
+                                // 1. Delete associated slots first to free up schedule
+                                const { error: delSlotsErr } = await (supabase as any)
+                                  .from('booking_slots')
+                                  .delete()
+                                  .eq('booking_id', selectedBooking.id);
+                                if (delSlotsErr) throw delSlotsErr;
 
-                             // 2. Set status to cancelled
-                             const { error } = await (supabase as any)
-                               .from('bookings')
-                               .update({ 
-                                 status: 'cancelled', 
-                                 notes: `DITOLAK ADMIN: ${reason}. ` + (selectedBooking.notes || '')
-                               })
-                               .eq('id', selectedBooking.id);
-                             if (error) throw error;
+                                // 2. Set status to cancelled
+                                const { error } = await (supabase as any)
+                                  .from('bookings')
+                                  .update({ 
+                                    status: 'cancelled', 
+                                    notes: `DITOLAK ADMIN: ${reason}. ` + (selectedBooking.notes || '')
+                                  })
+                                  .eq('id', selectedBooking.id);
+                                if (error) throw error;
 
-                             // WhatsApp redirect for rejection
-                             const waNum = selectedBooking.whatsapp_number.replace(/[^0-9]/g, '');
-                             const trackingUrl = typeof window !== 'undefined' 
-                               ? `${window.location.origin}/booking/track/${selectedBooking.booking_code}?wa=${waNum}` 
-                               : '';
-                             const waMsg = `Halo ${selectedBooking.customer_name}, bukti pembayaran sewa lapangan olahraga Anda untuk booking *${selectedBooking.booking_code}* telah **DITOLAK** oleh Admin dengan alasan: "${reason}".\n\nSilakan unggah ulang bukti transfer baru di: ${trackingUrl}`;
-                             window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`, '_blank');
+                                // WhatsApp redirect for rejection
+                                const waNum = selectedBooking.whatsapp_number.replace(/[^0-9]/g, '');
+                                const trackingUrl = typeof window !== 'undefined' 
+                                  ? `${window.location.origin}/booking/track/${selectedBooking.booking_code}?wa=${waNum}` 
+                                  : '';
+                                const waMsg = `Halo ${selectedBooking.customer_name}, bukti pembayaran sewa lapangan olahraga Anda untuk booking *${selectedBooking.booking_code}* telah **DITOLAK** oleh Admin dengan alasan: "${reason}".\n\nSilakan unggah ulang bukti transfer baru di: ${trackingUrl}`;
+                                window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`, '_blank');
 
-                             setIsModalOpen(false);
-                             fetchBookings();
-                           } catch (err) {
-                             console.error(err);
-                             alert('Gagal menolak.');
-                           }
-                         }
-                       }}
-                       className="py-2 px-3 bg-[#ff3b30] hover:bg-[#d6241a] text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-sm"
-                     >
-                       <span className="material-symbols-outlined text-sm">cancel</span>
-                       Tolak
-                     </button>
+                                Swal.fire('Berhasil!', 'Pembayaran telah ditolak.', 'success');
+                                setIsModalOpen(false);
+                                fetchBookings();
+                              } catch (err) {
+                                console.error(err);
+                                Swal.fire('Gagal!', 'Gagal menolak pembayaran.', 'error');
+                              }
+                            }
+                          });
+                        }}
+                        className="py-2 px-3 bg-[#ff3b30] hover:bg-[#d6241a] text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-sm">cancel</span>
+                        Tolak
+                      </button>
                    </div>
                  </div>
                )}

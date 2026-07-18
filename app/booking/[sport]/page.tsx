@@ -52,6 +52,7 @@ export default function BookingPage() {
   // QRIS Countdown timer state (10 minutes)
   const [qrisTimer, setQrisTimer] = useState(600);
   const [bookingRef, setBookingRef] = useState('');
+  const [copied, setCopied] = useState(false);
 
   // Manual payment workflow states
   const [uniqueCode, setUniqueCode] = useState<number>(0);
@@ -213,6 +214,24 @@ export default function BookingPage() {
       setUniqueCode(Math.floor(100 + Math.random() * 900));
     }
   }, [step, uniqueCode]);
+
+  const handleCopyCode = async () => {
+    if (!bookingRef) return;
+    try {
+      await navigator.clipboard.writeText(bookingRef);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy booking code:', err);
+    }
+  };
+
+  // Automatically copy booking code to clipboard on success screen
+  useEffect(() => {
+    if (step === 'success' && bookingRef) {
+      handleCopyCode();
+    }
+  }, [step, bookingRef]);
 
   // Total price calculation using database pricing rules
   const baseTotalPrice = priceConfig
@@ -1066,13 +1085,30 @@ export default function BookingPage() {
             </div>
 
             {/* Reference Number */}
-            <div className="bg-surface-container-low border border-[#0052ff]/10 py-3 px-4 rounded-xl inline-block">
+            <div className="bg-surface-container-low border border-[#0052ff]/10 py-3 px-6 rounded-xl inline-flex flex-col items-center justify-center relative">
               <span className="font-label-caps text-[10px] text-on-surface-variant/70 tracking-wider block select-none">
                 NOMOR BOOKING
               </span>
-              <span className="font-label-caps text-sm font-extrabold text-[#003ec7] tracking-wider mt-0.5 block select-all">
-                {bookingRef}
-              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="font-label-caps text-sm font-extrabold text-[#003ec7] tracking-wider select-all">
+                  {bookingRef}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopyCode}
+                  className="p-1 hover:bg-[#0052ff]/5 text-slate-400 hover:text-primary transition-colors flex items-center justify-center rounded"
+                  title="Salin Kode Booking"
+                >
+                  <span className="material-symbols-outlined text-base">
+                    {copied ? 'check_circle' : 'content_copy'}
+                  </span>
+                </button>
+              </div>
+              {copied && (
+                <span className="text-[10px] text-[#0052ff] font-extrabold block mt-0.5 animate-pulse">
+                  Kode otomatis disalin!
+                </span>
+              )}
             </div>
 
             {/* Receipt details */}
@@ -1136,6 +1172,7 @@ export default function BookingPage() {
                 )}`}
                 target="_blank"
                 rel="noreferrer"
+                onClick={handleCopyCode}
                 className="w-full py-3.5 bg-[#c1f100] hover:bg-[#abd600] text-[#191b25] font-headline-md text-sm font-bold uppercase tracking-wider rounded-xl transition-standard shadow-sm flex items-center justify-center gap-2 cursor-pointer select-none text-center"
               >
                 <span className="material-symbols-outlined text-lg" data-icon="send">send</span>
