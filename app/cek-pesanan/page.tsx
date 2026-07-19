@@ -58,10 +58,23 @@ function TrackBookingContent() {
   const [booking, setBooking] = useState<TrackedBooking | null>(null);
   const [pricingPackages, setPricingPackages] = useState<PricingPackage[]>([]);
   const [selectedPkgId, setSelectedPkgId] = useState('');
+  const [adminWhatsapp, setAdminWhatsapp] = useState<string>('');
 
   const [loading, setLoading] = useState(false);
   const [extending, setExtending] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Fetch admin WhatsApp settings dynamically
+  useEffect(() => {
+    async function fetchSettings() {
+      const { supabase } = await import('@/lib/supabase/client');
+      const { data } = await supabase.from('system_settings').select('admin_whatsapp').single();
+      if (data?.admin_whatsapp) {
+        setAdminWhatsapp(data.admin_whatsapp);
+      }
+    }
+    fetchSettings();
+  }, []);
 
   // Auto-run if URL query params exist
   useEffect(() => {
@@ -452,7 +465,7 @@ function TrackBookingContent() {
                   <p className="text-xs text-on-surface-variant">Hubungi admin langsung jika ada kendala pembayaran atau verifikasi.</p>
                 </div>
                 <a
-                  href={waContactAdmin(booking.booking_code, booking.customer_name)}
+                  href={waContactAdmin(booking.booking_code, booking.customer_name, adminWhatsapp)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 bg-success-green hover:bg-green-600 text-white rounded-md text-sm font-bold transition-colors"

@@ -31,12 +31,13 @@ export default function BookingSuccessPage() {
   const bookingId = params?.bookingId as string;
 
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [adminWhatsapp, setAdminWhatsapp] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!bookingId) return;
 
-    async function fetchBooking() {
+    async function fetchData() {
       try {
         // Fetch booking info using server-side API endpoint
         const res = await fetch(`/api/bookings/${bookingId}`);
@@ -46,13 +47,22 @@ export default function BookingSuccessPage() {
         }
         const data = await res.json();
         setBooking(data.booking as Booking);
+
+        // Fetch dynamic admin whatsapp number
+        const { data: sData } = await supabase
+          .from('system_settings')
+          .select('admin_whatsapp')
+          .single();
+        if (sData?.admin_whatsapp) {
+          setAdminWhatsapp(sData.admin_whatsapp);
+        }
       } catch (err) {
         console.error('Error fetching success booking:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchBooking();
+    fetchData();
   }, [bookingId, router]);
 
   if (loading) {
@@ -140,7 +150,7 @@ export default function BookingSuccessPage() {
             </Link>
             
             <a
-              href={waContactAdmin(booking.booking_code, booking.customer_name)}
+              href={waContactAdmin(booking.booking_code, booking.customer_name, adminWhatsapp)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-grow px-5 py-3 bg-success-green hover:bg-green-600 text-white rounded-md text-center font-bold text-sm transition-colors flex items-center justify-center gap-1.5"

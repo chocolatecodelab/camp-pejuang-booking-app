@@ -80,14 +80,14 @@ export function waBookingCancelled(booking: BookingInfo, reason: string): string
 }
 
 /** Customer contacts admin — pre-filled template */
-export function waContactAdmin(bookingCode: string, customerName: string): string {
+export function waContactAdmin(bookingCode: string, customerName: string, adminWhatsapp?: string): string {
   const message =
     `Halo Admin Camp Pejuang,\n\n` +
     `Saya ${customerName} ingin bertanya tentang booking saya.\n` +
     `Kode Booking: *${bookingCode}*\n\n` +
     `(Tuliskan pertanyaan Anda di sini)`;
 
-  return waLink(OWNER_WA, message);
+  return waLink(adminWhatsapp || OWNER_WA, message);
 }
 
 /** Admin confirms payment to customer */
