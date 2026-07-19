@@ -1,0 +1,939 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { getCampTypeLabel, getCampTypeColor, formatRupiah } from '@/lib/utils/helpers';
+import Swal from 'sweetalert2';
+
+interface PricingPackage {
+  id?: string;
+  room_id: string;
+  label: string;
+  duration_days: number;
+  price: number;
+  min_dp_amount: number | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+interface Room {
+  id?: string;
+  camp_id: string;
+  name: string;
+  floor_label: string;
+  room_photo_urls: string[] | null;
+  is_active: boolean;
+}
+
+interface Camp {
+  id?: string;
+  name: string;
+  slug: string;
+  type: 'putra' | 'putri' | 'campuran';
+  address: string;
+  description: string | null;
+  facilities: string[] | null;
+  cover_photo_url: string | null;
+  gallery_photo_urls?: string[] | null;
+  is_active: boolean;
+}
+
+export default function AdminCampsPage() {
+  const [camps, setCamps] = useState<Camp[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [packages, setPackages] = useState<PricingPackage[]>([]);
+  
+  const [loading, setLoading] = useState(true);
+  
+  // Selection states for drilling down
+  const [selectedCamp, setSelectedCamp] = useState<Camp | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  
+  // Modal states
+  const [activeModal, setActiveModal] = useState<'none' | 'camp' | 'room' | 'package'>('none');
+  const [editingCamp, setEditingCamp] = useState<Camp | null>(null);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const [editingPackage, setEditingPackage] = useState<PricingPackage | null>(null);
+
+  const [campForm, setCampForm] = useState({
+    name: '',
+    slug: '',
+    type: 'putra' as 'putra' | 'putri' | 'campuran',
+    address: '',
+    description: '',
+    facilitiesStr: '',
+    cover_photo_url: '',
+    gallery_photo_urls: [] as string[],
+    is_active: true
+  });
+  
+  const [roomForm, setRoomForm] = useState({
+    name: '', floor_label: 'Lantai 1', room_photo_urls: [] as string[], is_active: true
+  });
+
+  const [packageForm, setPackageForm] = useState({
+    label: '1 Bulan', duration_days: 30, price: 500000, min_dp_amount: '', sort_order: 1, is_active: true
+  });
+
+  // Photo upload states
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingRoom, setUploadingRoom] = useState(false);
+
+  useEffect(() => {
+    fetchCamps();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCamp) {
+      fetchRooms(selectedCamp.id!);
+      setSelectedRoom(null);
+      setPackages([]);
+    }
+  }, [selectedCamp]);
+
+  useEffect(() => {
+    if (selectedRoom) {
+      fetchPackages(selectedRoom.id!);
+    }
+  }, [selectedRoom]);
+
+  const fetchCamps = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/camps');
+      const data = await res.json();
+      if (data.camps) {
+        // Fetch full camps (including inactive ones) via admin API using destructuring of 'camps' instead of 'data'
+        const { camps: adminCamps } = await fetch('/api/admin/camps').then((r) => r.json());
+        setCamps(adminCamps || data.camps);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRooms = async (campId: string) => {
+    try {
+      const res = await fetch(`/api/admin/camps/${campId}/rooms`);
+      const data = await res.json();
+      if (data.rooms) setRooms(data.rooms);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchPackages = async (roomId: string) => {
+    try {
+      const res = await fetch(`/api/admin/rooms/${roomId}/pricing`);
+      const data = await res.json();
+      if (data.pricing_packages) setPackages(data.pricing_packages);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // CAMP CRUD ACTIONS
+  const handleOpenCampModal = (camp: Camp | null = null) => {
+    if (camp) {
+      setEditingCamp(camp);
+      setCampForm({
+        name: camp.name,
+        slug: camp.slug,
+        type: camp.type,
+        address: camp.address,
+        description: camp.description || '',
+        facilitiesStr: camp.facilities?.join(', ') || '',
+        cover_photo_url: camp.cover_photo_url || '',
+        gallery_photo_urls: (camp as any).gallery_photo_urls || [],
+        is_active: camp.is_active
+      });
+    } else {
+      setEditingCamp(null);
+      setCampForm({
+        name: '',
+        slug: '',
+        type: 'putra',
+        address: '',
+        description: '',
+        facilitiesStr: 'Free Wifi, AC, Kamar Mandi Dalam',
+        cover_photo_url: '',
+        gallery_photo_urls: [],
+        is_active: true
+      });
+    }
+    setActiveModal('camp');
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append('campId', editingCamp?.id || 'temp-camp');
+      formData.append('file', file);
+      formData.append('isRoom', 'false');
+
+      const res = await fetch('/api/admin/camps/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        Swal.fire('Upload Gagal', data.error || 'Terjadi kesalahan', 'error');
+        return;
+      }
+
+      setCampForm(prev => ({ ...prev, cover_photo_url: data.url }));
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', 'Gagal mengupload foto sampul', 'error');
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingGallery(true);
+    try {
+      const uploadedUrls: string[] = [...campForm.gallery_photo_urls];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('campId', editingCamp?.id || 'temp-camp');
+        formData.append('file', file);
+        formData.append('isRoom', 'false');
+
+        const res = await fetch('/api/admin/camps/upload-photo', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (res.ok && data.url) {
+          uploadedUrls.push(data.url);
+        }
+      }
+
+      setCampForm(prev => ({ ...prev, gallery_photo_urls: uploadedUrls }));
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', 'Gagal mengupload beberapa foto galeri', 'error');
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleRoomPhotosUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedCamp) return;
+
+    setUploadingRoom(true);
+    try {
+      const uploadedUrls: string[] = [...roomForm.room_photo_urls];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('campId', selectedCamp.id!);
+        formData.append('file', file);
+        formData.append('isRoom', 'true');
+        formData.append('roomId', editingRoom?.id || 'temp-room');
+
+        const res = await fetch('/api/admin/camps/upload-photo', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (res.ok && data.url) {
+          uploadedUrls.push(data.url);
+        }
+      }
+
+      setRoomForm(prev => ({ ...prev, room_photo_urls: uploadedUrls }));
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', 'Gagal mengupload beberapa foto kamar', 'error');
+    } finally {
+      setUploadingRoom(false);
+    }
+  };
+
+  const handleSaveCamp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      name: campForm.name,
+      slug: campForm.slug || campForm.name.toLowerCase().replace(/ /g, '-'),
+      type: campForm.type,
+      address: campForm.address,
+      description: campForm.description || null,
+      facilities: campForm.facilitiesStr.split(',').map((f) => f.trim()).filter(Boolean),
+      cover_photo_url: campForm.cover_photo_url || null,
+      gallery_photo_urls: campForm.gallery_photo_urls || [],
+      is_active: campForm.is_active
+    };
+
+    try {
+      let res;
+      if (editingCamp) {
+        res = await fetch(`/api/admin/camps`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingCamp.id, ...payload })
+        });
+      } else {
+        res = await fetch(`/api/admin/camps`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (!res.ok) throw new Error('Gagal menyimpan Camp');
+      
+      Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Camp berhasil disimpan', confirmButtonColor: '#b52330' });
+      setActiveModal('none');
+      fetchCamps();
+    } catch (err: any) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message, confirmButtonColor: '#b52330' });
+    }
+  };
+
+  // ROOM CRUD ACTIONS
+  const handleOpenRoomModal = (room: Room | null = null) => {
+    if (!selectedCamp) return;
+    if (room) {
+      setEditingRoom(room);
+      setRoomForm({
+        name: room.name,
+        floor_label: room.floor_label,
+        room_photo_urls: room.room_photo_urls || [],
+        is_active: room.is_active
+      });
+    } else {
+      setEditingRoom(null);
+      setRoomForm({
+        name: '', floor_label: 'Lantai 1', room_photo_urls: [], is_active: true
+      });
+    }
+    setActiveModal('room');
+  };
+
+  const handleSaveRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCamp) return;
+    const payload = {
+      camp_id: selectedCamp.id,
+      name: roomForm.name,
+      floor_label: roomForm.floor_label,
+      room_photo_urls: roomForm.room_photo_urls.length > 0 ? roomForm.room_photo_urls : null,
+      is_active: roomForm.is_active
+    };
+
+    try {
+      let res;
+      if (editingRoom) {
+        res = await fetch(`/api/admin/camps/${selectedCamp.id}/rooms`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingRoom.id, ...payload })
+        });
+      } else {
+        res = await fetch(`/api/admin/camps/${selectedCamp.id}/rooms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (!res.ok) throw new Error('Gagal menyimpan Kamar');
+      
+      Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Kamar berhasil disimpan', confirmButtonColor: '#b52330' });
+      setActiveModal('none');
+      fetchRooms(selectedCamp.id!);
+    } catch (err: any) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message, confirmButtonColor: '#b52330' });
+    }
+  };
+
+  // PRICING PACKAGE CRUD ACTIONS
+  const handleOpenPackageModal = (pkg: PricingPackage | null = null) => {
+    if (!selectedRoom) return;
+    if (pkg) {
+      setEditingPackage(pkg);
+      setPackageForm({
+        label: pkg.label,
+        duration_days: pkg.duration_days,
+        price: pkg.price,
+        min_dp_amount: pkg.min_dp_amount ? String(pkg.min_dp_amount) : '',
+        sort_order: pkg.sort_order,
+        is_active: pkg.is_active
+      });
+    } else {
+      setEditingPackage(null);
+      setPackageForm({
+        label: '1 Bulan', duration_days: 30, price: 500000, min_dp_amount: '', sort_order: 1, is_active: true
+      });
+    }
+    setActiveModal('package');
+  };
+
+  const handleSavePackage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoom) return;
+    const payload = {
+      room_id: selectedRoom.id,
+      label: packageForm.label,
+      duration_days: Number(packageForm.duration_days),
+      price: Number(packageForm.price),
+      min_dp_amount: packageForm.min_dp_amount ? Number(packageForm.min_dp_amount) : null,
+      sort_order: Number(packageForm.sort_order),
+      is_active: packageForm.is_active
+    };
+
+    try {
+      let res;
+      if (editingPackage) {
+        res = await fetch(`/api/admin/rooms/${selectedRoom.id}/pricing`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingPackage.id, ...payload })
+        });
+      } else {
+        res = await fetch(`/api/admin/rooms/${selectedRoom.id}/pricing`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (!res.ok) throw new Error('Gagal menyimpan Paket Harga');
+      
+      Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Paket Harga berhasil disimpan', confirmButtonColor: '#b52330' });
+      setActiveModal('none');
+      fetchPackages(selectedRoom.id!);
+    } catch (err: any) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message, confirmButtonColor: '#b52330' });
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-headline-md font-bold text-on-surface">Data Camp & Kamar</h1>
+          <p className="text-body-md text-on-surface-variant">Kelola data properti camp, kamar, lantai, dan skema paket harga sewa.</p>
+        </div>
+        <button
+          onClick={() => handleOpenCampModal()}
+          className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-1"
+        >
+          <span className="material-symbols-outlined text-base">add</span>
+          Tambah Camp
+        </button>
+      </div>
+
+      {/* Main Multi-drilldown Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Column 1: Camps List (Span 4) */}
+        <div className="lg:col-span-4 bg-white rounded-xl border border-[#EAEAEA] shadow-sm p-4 space-y-4">
+          <h3 className="text-label-sm font-bold text-primary uppercase tracking-wider">1. Pilih Camp</h3>
+          <div className="space-y-2">
+            {camps.map((camp) => (
+              <div
+                key={camp.id}
+                onClick={() => setSelectedCamp(camp)}
+                className={`p-3.5 rounded-lg border transition-all cursor-pointer flex justify-between items-center ${
+                  selectedCamp?.id === camp.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-[#EAEAEA] hover:bg-neutral-50'
+                }`}
+              >
+                <div className="space-y-0.5 min-w-0">
+                  <p className="font-bold text-on-surface truncate">{camp.name}</p>
+                  <span className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-bold ${getCampTypeColor(camp.type)}`}>
+                    {getCampTypeLabel(camp.type)}
+                  </span>
+                  {!camp.is_active && (
+                    <span className="text-[10px] bg-red-100 text-red-800 px-1 py-0.2 rounded ml-1 font-bold">Non-aktif</span>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenCampModal(camp);
+                  }}
+                  className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
+                >
+                  <span className="material-symbols-outlined text-sm font-bold">edit</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Column 2: Rooms List (Span 4) */}
+        <div className="lg:col-span-4 bg-white rounded-xl border border-[#EAEAEA] shadow-sm p-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-label-sm font-bold text-primary uppercase tracking-wider">2. Kamar di Camp</h3>
+            {selectedCamp && (
+              <button
+                onClick={() => handleOpenRoomModal()}
+                className="text-xs text-primary font-bold hover:underline flex items-center gap-0.5"
+              >
+                <span className="material-symbols-outlined text-xs">add</span> Tambah Kamar
+              </button>
+            )}
+          </div>
+
+          {!selectedCamp ? (
+            <p className="text-xs text-outline italic py-8 text-center bg-neutral-50 border border-dashed border-[#EAEAEA] rounded-lg">
+              Pilih camp di sebelah kiri untuk mengelola kamar.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[10px] text-outline font-semibold uppercase tracking-wider">Camp: {selectedCamp.name}</p>
+              {rooms.length === 0 ? (
+                <p className="text-xs text-outline py-4 text-center">Belum ada kamar di camp ini.</p>
+              ) : (
+                rooms.map((room) => (
+                  <div
+                    key={room.id}
+                    onClick={() => setSelectedRoom(room)}
+                    className={`p-3.5 rounded-lg border transition-all cursor-pointer flex justify-between items-center ${
+                      selectedRoom?.id === room.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-[#EAEAEA] hover:bg-neutral-50'
+                    }`}
+                  >
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-on-surface">{room.name}</p>
+                      <p className="text-[10px] text-outline font-medium">{room.floor_label}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenRoomModal(room);
+                      }}
+                      className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-sm font-bold">edit</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Column 3: Pricing Packages List (Span 4) */}
+        <div className="lg:col-span-4 bg-white rounded-xl border border-[#EAEAEA] shadow-sm p-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-label-sm font-bold text-primary uppercase tracking-wider">3. Paket Harga Kamar</h3>
+            {selectedRoom && (
+              <button
+                onClick={() => handleOpenPackageModal()}
+                className="text-xs text-primary font-bold hover:underline flex items-center gap-0.5"
+              >
+                <span className="material-symbols-outlined text-xs">add</span> Tambah Paket
+              </button>
+            )}
+          </div>
+
+          {!selectedRoom ? (
+            <p className="text-xs text-outline italic py-8 text-center bg-neutral-50 border border-dashed border-[#EAEAEA] rounded-lg">
+              Pilih kamar di atas/tengah untuk mengelola paket harga.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[10px] text-outline font-semibold uppercase tracking-wider">Kamar: {selectedRoom.name}</p>
+              {packages.length === 0 ? (
+                <p className="text-xs text-outline py-4 text-center">Belum ada paket harga di kamar ini.</p>
+              ) : (
+                packages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className="p-3.5 rounded-lg border border-[#EAEAEA] flex justify-between items-center"
+                  >
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-on-surface">{pkg.label} ({pkg.duration_days} Hari)</p>
+                      <p className="text-xs text-primary font-bold">{formatRupiah(pkg.price)}</p>
+                      {pkg.min_dp_amount && (
+                        <p className="text-[10px] text-success-green font-medium">Bisa DP mulai {formatRupiah(pkg.min_dp_amount)}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleOpenPackageModal(pkg)}
+                      className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-sm font-bold">edit</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* Camp Create/Edit Modal */}
+      {activeModal === 'camp' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleSaveCamp} className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-headline-sm text-base font-bold">{editingCamp ? 'Edit Camp' : 'Tambah Camp Baru'}</h3>
+            <div className="space-y-3 text-sm">
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Nama Camp</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Camp Pejuang Putra 1"
+                  value={campForm.name}
+                  onChange={(e) => setCampForm({ ...campForm, name: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Slug (URL)</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: camp-pejuang-putra-1"
+                  value={campForm.slug}
+                  onChange={(e) => setCampForm({ ...campForm, slug: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Tipe Camp</label>
+                <select
+                  value={campForm.type}
+                  onChange={(e) => setCampForm({ ...campForm, type: e.target.value as any })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                >
+                  <option value="putra">Khusus Putra</option>
+                  <option value="putri">Khusus Putri</option>
+                  <option value="campuran">Campuran</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Alamat Lengkap</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Jl. Asoka No. 23, Pare"
+                  value={campForm.address}
+                  onChange={(e) => setCampForm({ ...campForm, address: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Fasilitas (pisahkan dengan koma)</label>
+                <input
+                  type="text"
+                  placeholder="Wifi, AC, Kamar Mandi Dalam"
+                  value={campForm.facilitiesStr}
+                  onChange={(e) => setCampForm({ ...campForm, facilitiesStr: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Foto Sampul (Cover)</label>
+                {campForm.cover_photo_url ? (
+                  <div className="relative group border border-border-subtle rounded p-1 max-w-[200px]">
+                    <img src={campForm.cover_photo_url} alt="Cover" className="h-20 w-auto rounded object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setCampForm({ ...campForm, cover_photo_url: '' })}
+                      className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-800 text-white rounded-full p-1 shadow-sm flex items-center justify-center"
+                      title="Hapus Cover"
+                    >
+                      <span className="material-symbols-outlined text-xs">delete</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverUpload}
+                      disabled={uploadingCover}
+                      className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                    />
+                    {uploadingCover && <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>}
+                  </div>
+                )}
+              </div>
+
+              {/* Gallery Photos Upload */}
+              <div className="space-y-2">
+                <label className="text-label-sm font-semibold block">Galeri Foto Camp Lainnya</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(campForm.gallery_photo_urls || []).map((url, idx) => (
+                    <div key={idx} className="relative border border-border-subtle rounded p-1">
+                      <img src={url} alt={`Gallery ${idx}`} className="h-14 w-14 rounded object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = campForm.gallery_photo_urls.filter((_, i) => i !== idx);
+                          setCampForm({ ...campForm, gallery_photo_urls: updated });
+                        }}
+                        className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-800 text-white rounded-full p-0.5 shadow-sm flex items-center justify-center animate-fade-in"
+                        title="Hapus"
+                      >
+                        <span className="material-symbols-outlined text-[10px]">close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleGalleryUpload}
+                    disabled={uploadingGallery}
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  />
+                  {uploadingGallery && <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="camp-active"
+                  checked={campForm.is_active}
+                  onChange={(e) => setCampForm({ ...campForm, is_active: e.target.checked })}
+                />
+                <label htmlFor="camp-active" className="text-label-sm font-semibold cursor-pointer">Camp Aktif (Ditampilkan Publik)</label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-[#EAEAEA]">
+              <button
+                type="button"
+                onClick={() => setActiveModal('none')}
+                className="px-4 py-2 border border-[#EAEAEA] rounded text-xs font-bold text-on-surface-variant hover:bg-neutral-100"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary text-white rounded text-xs font-bold shadow hover:bg-primary-container"
+              >
+                Simpan Camp
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Room Create/Edit Modal */}
+      {activeModal === 'room' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleSaveRoom} className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-headline-sm text-base font-bold">{editingRoom ? 'Edit Kamar' : 'Tambah Kamar Baru'}</h3>
+            <div className="space-y-3 text-sm">
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Nama Kamar</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Kamar 101, Kamar A-3"
+                  value={roomForm.name}
+                  onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Label Lantai</label>
+                <select
+                  value={roomForm.floor_label}
+                  onChange={(e) => setRoomForm({ ...roomForm, floor_label: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                >
+                  <option value="Lantai 1">Lantai 1</option>
+                  <option value="Lantai 2">Lantai 2</option>
+                  <option value="Lantai 3">Lantai 3</option>
+                </select>
+              </div>
+
+              {/* Room Photos Upload */}
+              <div className="space-y-2">
+                <label className="text-label-sm font-semibold block">Foto Kamar (Bisa Banyak)</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(roomForm.room_photo_urls || []).map((url, idx) => (
+                    <div key={idx} className="relative border border-border-subtle rounded p-1">
+                      <img src={url} alt={`Room ${idx}`} className="h-14 w-14 rounded object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = roomForm.room_photo_urls.filter((_, i) => i !== idx);
+                          setRoomForm({ ...roomForm, room_photo_urls: updated });
+                        }}
+                        className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-800 text-white rounded-full p-0.5 shadow-sm flex items-center justify-center animate-fade-in"
+                        title="Hapus"
+                      >
+                        <span className="material-symbols-outlined text-[10px]">close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleRoomPhotosUpload}
+                    disabled={uploadingRoom}
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  />
+                  {uploadingRoom && <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="room-active"
+                  checked={roomForm.is_active}
+                  onChange={(e) => setRoomForm({ ...roomForm, is_active: e.target.checked })}
+                />
+                <label htmlFor="room-active" className="text-label-sm font-semibold cursor-pointer">Kamar Aktif (Tersedia untuk Booking)</label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-[#EAEAEA]">
+              <button
+                type="button"
+                onClick={() => setActiveModal('none')}
+                className="px-4 py-2 border border-[#EAEAEA] rounded text-xs font-bold text-on-surface-variant hover:bg-neutral-100"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary text-white rounded text-xs font-bold shadow hover:bg-primary-container"
+              >
+                Simpan Kamar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Pricing Package Create/Edit Modal */}
+      {activeModal === 'package' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleSavePackage} className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-headline-sm text-base font-bold">{editingPackage ? 'Edit Paket Harga' : 'Tambah Paket Harga'}</h3>
+            <div className="space-y-3 text-sm">
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Label Durasi</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: 1 Bulan, 2 Minggu"
+                  value={packageForm.label}
+                  onChange={(e) => setPackageForm({ ...packageForm, label: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Durasi (Hari)</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="30"
+                  value={packageForm.duration_days}
+                  onChange={(e) => setPackageForm({ ...packageForm, duration_days: Number(e.target.value) })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Harga Sewa (Rp)</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="500000"
+                  value={packageForm.price}
+                  onChange={(e) => setPackageForm({ ...packageForm, price: Number(e.target.value) })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Minimal DP (Rp, Kosongkan jika harus bayar lunas)</label>
+                <input
+                  type="number"
+                  placeholder="150000"
+                  value={packageForm.min_dp_amount}
+                  onChange={(e) => setPackageForm({ ...packageForm, min_dp_amount: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-label-sm font-semibold">Urutan Sortir (sort_order)</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="1"
+                  value={packageForm.sort_order}
+                  onChange={(e) => setPackageForm({ ...packageForm, sort_order: Number(e.target.value) })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="pkg-active"
+                  checked={packageForm.is_active}
+                  onChange={(e) => setPackageForm({ ...packageForm, is_active: e.target.checked })}
+                />
+                <label htmlFor="pkg-active" className="text-label-sm font-semibold cursor-pointer">Paket Aktif</label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-[#EAEAEA]">
+              <button
+                type="button"
+                onClick={() => setActiveModal('none')}
+                className="px-4 py-2 border border-[#EAEAEA] rounded text-xs font-bold text-on-surface-variant hover:bg-neutral-100"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary text-white rounded text-xs font-bold shadow hover:bg-primary-container"
+              >
+                Simpan Paket
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}

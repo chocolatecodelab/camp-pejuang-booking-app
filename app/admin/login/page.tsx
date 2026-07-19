@@ -56,19 +56,20 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f2f4fc] flex flex-col justify-between font-sans text-slate-800">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-between font-sans text-neutral-800">
       
       {/* 1. TOP HEADER BAR */}
-      <header className="w-full bg-[#f2f4fc] px-6 sm:px-12 h-16 flex items-center justify-between border-b border-transparent select-none shrink-0">
-        <Link href="/" className="flex items-center gap-1">
-          <span className="font-headline-md text-[#0047e1] font-black text-sm uppercase tracking-tight select-none">
-            Holiday Sport
+      <header className="w-full bg-[#FAFAFA] px-6 sm:px-12 h-16 flex items-center justify-between border-b border-neutral-200 select-none shrink-0">
+        <Link href="/" className="flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-primary font-bold">apartment</span>
+          <span className="font-headline-sm text-[#b52330] font-bold text-sm tracking-tight select-none">
+            Camp Pejuang
           </span>
         </Link>
         <button 
           type="button" 
-          onClick={() => alert('Butuh bantuan? Silakan hubungi tim IT Holiday Sport untuk panduan operasional.')}
-          className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors flex items-center justify-center"
+          onClick={() => alert('Butuh bantuan? Silakan hubungi tim IT Camp Pejuang untuk panduan operasional.')}
+          className="p-2 rounded-full hover:bg-neutral-200 text-neutral-500 transition-colors flex items-center justify-center"
           title="Bantuan"
         >
           <span className="material-symbols-outlined text-xl">help_outline</span>
@@ -77,63 +78,63 @@ export default function AdminLoginPage() {
 
       {/* 2. MAIN LOGIN CONTAINER */}
       <main className="flex-grow flex flex-col justify-center items-center px-4 py-8 shrink-0">
-        <div className="w-full max-w-[420px] bg-white border border-[#e4e6f2] rounded-2xl p-8 shadow-sm space-y-6 text-[#1c1e28] transition-transform duration-300 hover:shadow-md">
+        <div className="w-full max-w-[420px] bg-white border border-[#EAEAEA] rounded-2xl p-8 shadow-sm space-y-6 text-neutral-800 transition-transform duration-300 hover:shadow-md">
           
-          {/* Dashboard/Grid Blue Icon Container */}
+          {/* Dashboard Icon */}
           <div className="text-center space-y-4 select-none">
-            <div className="w-12 h-12 bg-[#0047e1] text-white rounded-lg flex items-center justify-center mx-auto shadow-sm">
-              <span className="material-symbols-outlined text-2xl font-bold">grid_view</span>
+            <div className="w-12 h-12 bg-[#b52330] text-white rounded-lg flex items-center justify-center mx-auto shadow-sm">
+              <span className="material-symbols-outlined text-2xl font-bold">admin_panel_settings</span>
             </div>
             <div className="space-y-1">
-              <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+              <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wider">
                 Admin Login
               </h2>
-              <p className="text-[11px] text-slate-500 leading-relaxed px-4">
-                Welcome back. Please enter your credentials to access the Holiday Sport command center.
+              <p className="text-[11px] text-neutral-500 leading-relaxed px-4">
+                Silakan masuk menggunakan akun admin untuk mengakses panel manajemen Camp Pejuang.
               </p>
             </div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email field */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-[10px] font-black tracking-wider text-slate-600 block uppercase select-none">
+            <div className="flex flex-col gap-1.5 text-sm">
+              <label htmlFor="email" className="text-[10px] font-bold tracking-wider text-neutral-600 block uppercase select-none">
                 Email Address
               </label>
-              <div className="flex items-center border border-[#e0e2ee] rounded-lg px-3 bg-white focus-within:border-[#0047e1] focus-within:ring-1 focus-within:ring-[#0047e1] transition-all">
-                <span className="material-symbols-outlined text-slate-400 text-lg mr-2 select-none">mail</span>
+              <div className="flex items-center border border-[#EAEAEA] rounded-lg px-3 bg-white focus-within:border-[#b52330] focus-within:ring-1 focus-within:ring-[#b52330] transition-all">
+                <span className="material-symbols-outlined text-neutral-400 text-lg mr-2 select-none">mail</span>
                 <input
                   type="email"
                   id="email"
-                  placeholder="admin@holidaysport.com"
+                  placeholder="admin@camppejuang.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full py-2.5 text-xs text-slate-800 placeholder-slate-400 outline-none bg-transparent"
+                  className="w-full py-2.5 text-xs text-neutral-800 placeholder-neutral-400 outline-none bg-transparent"
                   disabled={loading}
                 />
               </div>
             </div>
 
             {/* Password field */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="password" className="text-[10px] font-black tracking-wider text-slate-600 block uppercase select-none">
+            <div className="flex flex-col gap-1.5 text-sm">
+              <label htmlFor="password" className="text-[10px] font-bold tracking-wider text-neutral-600 block uppercase select-none">
                 Password
               </label>
-              <div className="flex items-center border border-[#e0e2ee] rounded-lg px-3 bg-white focus-within:border-[#0047e1] focus-within:ring-1 focus-within:ring-[#0047e1] transition-all">
-                <span className="material-symbols-outlined text-slate-400 text-lg mr-2 select-none">lock</span>
+              <div className="flex items-center border border-[#EAEAEA] rounded-lg px-3 bg-white focus-within:border-[#b52330] focus-within:ring-1 focus-within:ring-[#b52330] transition-all">
+                <span className="material-symbols-outlined text-neutral-400 text-lg mr-2 select-none">lock</span>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full py-2.5 text-xs text-slate-800 placeholder-slate-400 outline-none bg-transparent"
+                  className="w-full py-2.5 text-xs text-neutral-800 placeholder-neutral-400 outline-none bg-transparent"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-slate-400 hover:text-slate-600 ml-2 focus:outline-none flex items-center justify-center"
+                  className="text-neutral-400 hover:text-neutral-600 ml-2 focus:outline-none flex items-center justify-center"
                   title={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
                 >
                   <span className="material-symbols-outlined text-lg select-none">
@@ -143,23 +144,23 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
+            {/* Remember Me */}
             <div className="flex items-center justify-between text-xs font-semibold select-none pt-0.5">
-              <label className="flex items-center gap-2 cursor-pointer text-slate-600">
+              <label className="flex items-center gap-2 cursor-pointer text-neutral-600">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-[#d0d2dd] text-[#0047e1] focus:ring-[#0047e1] w-4 h-4 cursor-pointer"
+                  className="rounded border-[#EAEAEA] text-[#b52330] focus:ring-[#b52330] w-4 h-4 cursor-pointer"
                 />
-                Remember Me
+                Ingat Saya
               </label>
               <button
                 type="button"
                 onClick={() => alert('Fitur pemulihan kata sandi dinonaktifkan. Silakan hubungi tim IT Administrator.')}
-                className="text-[#0047e1] hover:underline"
+                className="text-[#b52330] hover:underline"
               >
-                Forgot Password?
+                Lupa Password?
               </button>
             </div>
 
@@ -174,7 +175,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#0047e1] hover:bg-[#0038b3] disabled:bg-slate-200 text-white font-bold text-xs rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer"
+              className="w-full py-3 bg-[#b52330] hover:bg-[#93000a] disabled:bg-neutral-200 text-white font-bold text-xs rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -185,37 +186,37 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Card Footer Divider */}
-          <div className="border-t border-[#efeff6] pt-4 text-center select-none">
-            <p className="text-[11px] text-slate-500">
-              Trouble accessing your account?{' '}
+          <div className="border-t border-neutral-100 pt-4 text-center select-none">
+            <p className="text-[11px] text-neutral-500">
+              Ada kendala masuk ke akun?{' '}
               <a 
                 href="https://wa.me/6281234567890" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="text-[#0047e1] font-bold hover:underline"
+                className="text-[#b52330] font-bold hover:underline"
               >
-                Contact System Admin
+                Hubungi Admin Sistem
               </a>
             </p>
           </div>
         </div>
 
         {/* Small icons below card */}
-        <div className="flex justify-center gap-4 text-slate-400/80 pt-6 select-none shrink-0">
+        <div className="flex justify-center gap-4 text-neutral-300 pt-6 select-none shrink-0">
           <span className="material-symbols-outlined text-base">settings</span>
-          <span className="material-symbols-outlined text-base">sports_tennis</span>
-          <span className="material-symbols-outlined text-base">stadium</span>
+          <span className="material-symbols-outlined text-base">apartment</span>
+          <span className="material-symbols-outlined text-base">security</span>
         </div>
       </main>
 
       {/* 3. BOTTOM FOOTER BAR */}
-      <footer className="w-full bg-[#f2f4fc] border-t border-[#e2e4ee] px-6 sm:px-12 py-4 flex flex-col sm:flex-row justify-between items-center text-[10px] text-slate-500 gap-2 shrink-0 select-none font-medium">
+      <footer className="w-full bg-[#FAFAFA] border-t border-neutral-200 px-6 sm:px-12 py-4 flex flex-col sm:flex-row justify-between items-center text-[10px] text-neutral-500 gap-2 shrink-0 select-none font-medium">
         <div>
-          <span className="font-extrabold text-[#0047e1]">Holiday Sport</span>
-          <span className="ml-1">&copy; 2024 Holiday Sport. All rights reserved.</span>
+          <span className="font-bold text-[#b52330]">Camp Pejuang</span>
+          <span className="ml-1">&copy; {new Date().getFullYear()} Camp Pejuang. All rights reserved.</span>
         </div>
         <div className="flex gap-4 sm:gap-6 font-semibold">
-          <button type="button" onClick={() => alert('Kebijakan Privasi Holiday Sport.')} className="hover:underline">Privacy Policy</button>
+          <button type="button" onClick={() => alert('Kebijakan Privasi.')} className="hover:underline">Privacy Policy</button>
           <button type="button" onClick={() => alert('Syarat & Ketentuan Layanan.')} className="hover:underline">Terms of Service</button>
           <button type="button" onClick={() => alert('Sistem Keamanan Portal.')} className="hover:underline">Security</button>
         </div>

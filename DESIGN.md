@@ -1,198 +1,189 @@
 ---
-name: ActiveGrid
+name: Warm Vanguard
 colors:
-  surface: '#fbf8ff'
-  surface-dim: '#d9d9e7'
-  surface-bright: '#fbf8ff'
+  surface: '#fcf9f8'
+  surface-dim: '#dcd9d9'
+  surface-bright: '#fcf9f8'
   surface-container-lowest: '#ffffff'
-  surface-container-low: '#f3f2ff'
-  surface-container: '#ededfb'
-  surface-container-high: '#e7e7f5'
-  surface-container-highest: '#e1e1ef'
-  on-surface: '#191b25'
-  on-surface-variant: '#434656'
-  inverse-surface: '#2e303a'
-  inverse-on-surface: '#f0effe'
-  outline: '#737688'
-  outline-variant: '#c3c5d9'
-  surface-tint: '#004ced'
-  primary: '#003ec7'
+  surface-container-low: '#f6f3f2'
+  surface-container: '#f0eded'
+  surface-container-high: '#eae7e7'
+  surface-container-highest: '#e5e2e1'
+  on-surface: '#1c1b1b'
+  on-surface-variant: '#5a403f'
+  inverse-surface: '#313030'
+  inverse-on-surface: '#f3f0ef'
+  outline: '#8e706f'
+  outline-variant: '#e2bebc'
+  surface-tint: '#b52330'
+  primary: '#b52330'
   on-primary: '#ffffff'
-  primary-container: '#0052ff'
-  on-primary-container: '#dfe3ff'
-  inverse-primary: '#b7c4ff'
-  secondary: '#506600'
+  primary-container: '#ff5a5f'
+  on-primary-container: '#61000e'
+  inverse-primary: '#ffb3b0'
+  secondary: '#0453cd'
   on-secondary: '#ffffff'
-  secondary-container: '#c1f100'
-  on-secondary-container: '#546b00'
-  tertiary: '#4f4e4e'
+  secondary-container: '#356ee7'
+  on-secondary-container: '#fefcff'
+  tertiary: '#7e5700'
   on-tertiary: '#ffffff'
-  tertiary-container: '#676666'
-  on-tertiary-container: '#e7e4e4'
+  tertiary-container: '#c38900'
+  on-tertiary-container: '#3e2900'
   error: '#ba1a1a'
   on-error: '#ffffff'
   error-container: '#ffdad6'
   on-error-container: '#93000a'
-  primary-fixed: '#dde1ff'
-  primary-fixed-dim: '#b7c4ff'
-  on-primary-fixed: '#001452'
-  on-primary-fixed-variant: '#0038b6'
-  secondary-fixed: '#c3f400'
-  secondary-fixed-dim: '#abd600'
-  on-secondary-fixed: '#161e00'
-  on-secondary-fixed-variant: '#3c4d00'
-  tertiary-fixed: '#e5e2e1'
-  tertiary-fixed-dim: '#c8c6c5'
-  on-tertiary-fixed: '#1c1b1b'
-  on-tertiary-fixed-variant: '#474646'
-  background: '#fbf8ff'
-  on-background: '#191b25'
-  surface-variant: '#e1e1ef'
-  status-available: '#EDF2FF'
-  status-booked: '#F1F3F5'
-  status-hold: '#FFF4E6'
-  success-green: '#00C853'
-  error-red: '#FF3B30'
+  primary-fixed: '#ffdad8'
+  primary-fixed-dim: '#ffb3b0'
+  on-primary-fixed: '#410007'
+  on-primary-fixed-variant: '#92001b'
+  secondary-fixed: '#dae2ff'
+  secondary-fixed-dim: '#b2c5ff'
+  on-secondary-fixed: '#001848'
+  on-secondary-fixed-variant: '#0040a2'
+  tertiary-fixed: '#ffdeac'
+  tertiary-fixed-dim: '#ffba35'
+  on-tertiary-fixed: '#281900'
+  on-tertiary-fixed-variant: '#5f4100'
+  background: '#fcf9f8'
+  on-background: '#1c1b1b'
+  surface-variant: '#e5e2e1'
+  background-warm: '#FAFAFA'
+  surface-cream: '#FFFDFB'
+  success-green: '#28A745'
+  border-subtle: '#EAEAEA'
 typography:
-  headline-xl:
-    fontFamily: Hanken Grotesk
+  eyebrow:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 14px
+    fontWeight: '600'
+    lineHeight: 20px
+    letterSpacing: 0.05em
+  headline-lg:
+    fontFamily: Plus Jakarta Sans
     fontSize: 48px
-    fontWeight: '800'
+    fontWeight: '700'
     lineHeight: 56px
     letterSpacing: -0.02em
-  headline-lg:
-    fontFamily: Hanken Grotesk
+  headline-lg-mobile:
+    fontFamily: Plus Jakarta Sans
     fontSize: 32px
     fontWeight: '700'
     lineHeight: 40px
     letterSpacing: -0.01em
-  headline-lg-mobile:
-    fontFamily: Hanken Grotesk
-    fontSize: 28px
-    fontWeight: '700'
-    lineHeight: 34px
   headline-md:
-    fontFamily: Hanken Grotesk
-    fontSize: 24px
+    fontFamily: Plus Jakarta Sans
+    fontSize: 32px
+    fontWeight: '700'
+    lineHeight: 40px
+  headline-sm:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 20px
     fontWeight: '600'
-    lineHeight: 32px
+    lineHeight: 28px
   body-lg:
-    fontFamily: Inter
+    fontFamily: Plus Jakarta Sans
     fontSize: 18px
     fontWeight: '400'
     lineHeight: 28px
   body-md:
-    fontFamily: Inter
+    fontFamily: Plus Jakarta Sans
     fontSize: 16px
     fontWeight: '400'
     lineHeight: 24px
-  body-sm:
-    fontFamily: Inter
+  label-md:
+    fontFamily: Plus Jakarta Sans
     fontSize: 14px
-    fontWeight: '400'
+    fontWeight: '500'
     lineHeight: 20px
-  label-caps:
-    fontFamily: JetBrains Mono
+  label-sm:
+    fontFamily: Plus Jakarta Sans
     fontSize: 12px
     fontWeight: '600'
     lineHeight: 16px
-    letterSpacing: 0.05em
-  price-display:
-    fontFamily: Hanken Grotesk
-    fontSize: 20px
-    fontWeight: '700'
-    lineHeight: 24px
 rounded:
-  sm: 0.125rem
-  DEFAULT: 0.25rem
-  md: 0.375rem
-  lg: 0.5rem
-  xl: 0.75rem
+  sm: 0.25rem
+  DEFAULT: 0.5rem
+  md: 0.75rem
+  lg: 1rem
+  xl: 1.5rem
   full: 9999px
 spacing:
-  base: 4px
-  container-margin: 20px
-  gutter: 12px
+  container-max: 1200px
+  gutter: 24px
+  margin-mobile: 16px
+  margin-desktop: 48px
   stack-sm: 8px
   stack-md: 16px
   stack-lg: 32px
+  section-gap: 80px
 ---
 
 ## Brand & Style
 
-The brand identity is built around the concept of "Performance in Motion." It targets urban athletes and recreational players who value efficiency and spontaneous activity. The UI must feel as responsive and energetic as the sports it facilitates (Futsal, Badminton, Table Tennis), transitioning from a high-energy landing experience to a hyper-functional, high-contrast booking utility.
+The design system is anchored in the concept of "Guided Ambition." It speaks to the "Pejuang" (warrior/fighter) spirit but softens it with a nurturing, communal layer. The target audience consists of students and young professionals seeking growth and community in a structured, residential environment.
 
-The design style is **Corporate / Modern** with a **High-Contrast / Bold** edge. This approach ensures professional reliability for financial transactions while utilizing aggressive typography and vibrant accents to maintain an "athletic" spirit. We prioritize clarity in the scheduling grid—reducing cognitive load during the high-stakes moment of securing a court.
-
-- **Visual Tone:** Professional, Energetic, Precise, and Accessible.
-- **Vibe:** The digital equivalent of a fresh court floor—clean, marked with clear lines, and ready for action.
+We utilize a **Modern Minimalist** style infused with **warm, tactile elements**. This approach balances the professional reliability required for a residential service with the emotional warmth of a home. The UI features generous whitespace to reduce cognitive load, high-quality typography for clarity, and soft, diffused depth to create a welcoming, approachable atmosphere. It avoids the coldness of traditional corporate SaaS by using a refined coral palette and organic spacing rhythms.
 
 ## Colors
 
-The palette is anchored by "Athletic Blue" (#0052FF), a high-energy primary color that signals trust and action. It is paired with "Volt Green" (#CCFF00), a vibrant secondary accent used sparingly for call-to-actions and "active" states to draw immediate attention.
+The palette is centered on a **Professional Coral** (`#FF5A5F`), which serves as the primary driver for action and brand identity. This specific hue is chosen to feel energetic and "human" rather than aggressive.
 
-- **Primary (Athletic Blue):** Used for navigation, primary buttons, and selected time slots.
-- **Secondary (Volt Green):** Used for critical high-conversion buttons and highlights.
-- **Tertiary (Pitch Black):** Used for heavy typography to maintain high contrast.
-- **Neutral:** A range of cool grays provides the structure for the scheduling grid, ensuring that the "Available" vs "Booked" status is immediately legible without color-blindness issues.
-- **Status Colors:** Functional tints are used for the scheduling state-machine (Hold, Pending, Confirmed) to provide soft feedback without overwhelming the layout.
+- **Primary (Coral):** Reserved for core CTAs, progress indicators, and active states.
+- **Secondary (Deep Blue):** Used sparingly for trust indicators, links, and map markers to provide a grounded, institutional contrast.
+- **Backgrounds:** We avoid pure white in favor of `background-warm` (`#FAFAFA`) to reduce eye strain and increase the "cozy" residential feel.
+- **Neutrals:** Text and iconography use a softened black (`#1A1A1A`) to maintain high legibility without the harshness of high-contrast black on white.
 
 ## Typography
 
-The typographic system utilizes **Hanken Grotesk** for headlines to provide a sharp, contemporary "tech-meets-sport" aesthetic. Its bold weights are particularly effective for court names and venue headers.
+This design system uses **Plus Jakarta Sans** for all roles to achieve a cohesive, modern, and friendly geometric look. 
 
-**Inter** handles body copy and form inputs, chosen for its exceptional legibility on mobile devices and its neutral, systematic feel. 
-
-For technical data—specifically time slots, booking codes, and currency—**JetBrains Mono** is introduced. This monospaced choice ensures that time columns in the grid align perfectly and provides a "data-driven" look that reinforces the precision of the booking platform.
-
-- **Hierarchy:** Use `headline-xl` for landing page hero sections.
-- **Utility:** Use `label-caps` for table headers and metadata (e.g., "WHATSAPP NUMBER").
-- **Contrast:** Ensure all `headline` levels use the Tertiary (#121212) color for maximum punch.
+- **Headlines:** Feature tight letter-spacing and bold weights to convey strength and clarity.
+- **Eyebrows:** Used for greetings like "Selamat Datang," these use a slightly wider letter-spacing and uppercase styling to establish hierarchy without competing with the H1.
+- **Body:** Set with generous line height (1.5x) to ensure maximum readability for camp descriptions and rules. 
+- **Hierarchy:** We prioritize a clear vertical rhythm. Mobile headlines are aggressively scaled down to ensure the "warrior" headlines never feel overwhelming on small screens.
 
 ## Layout & Spacing
 
-The system follows a **mobile-first fluid grid**. On mobile, the layout relies on a single-column stack with 20px side margins. On desktop, the scheduling grid expands into a multi-column view allowing users to compare courts side-by-side.
+The layout follows a **Fixed-Fluid Hybrid Grid**. Content is contained within a 1200px max-width container on desktop, centered to provide focus. 
 
-- **The Schedule Grid:** This is the core component. It uses a fixed-height row system (48px per hour) to ensure vertical alignment across multiple court columns. 
-- **Spacing Rhythm:** We use a 4px base unit. Component internal padding should favor "compact" (8px/12px) to maximize the amount of information visible on small screens.
-- **Mobile Reflow:** In the `/jadwal` view, court columns become horizontally scrollable "cards" if more than two courts exist, ensuring the user can always see the time slots clearly.
+- **Grid:** A 12-column system is used for desktop. Card layouts (Camp listings) should span 4 columns (3-up) or 6 columns (2-up) depending on content density.
+- **Rhythm:** We use a strict 8px base unit. Section gaps are kept generous (80px+) to allow the design to "breathe," emphasizing the minimalist aesthetic.
+- **Mobile:** On mobile devices, the grid collapses to a single column with 16px side margins. Cards transition from a grid-row to a vertical stack.
 
 ## Elevation & Depth
 
-To maintain the "Modern / Clean" aesthetic, depth is achieved through **Tonal Layers** and **Low-Contrast Outlines** rather than heavy shadows.
+To maintain the "Modern Minimalist" feel, we avoid heavy shadows. Instead, we use **Ambient Tonal Layers**:
 
-- **Surface Levels:** 
-    - Level 0: Background (White or #F8F9FA).
-    - Level 1: Cards and Grid Containers (White with 1px border #E9ECEF).
-    - Level 2: Modals and Floating Action Buttons (Subtle 15% opacity Athletic Blue shadow).
-- **Depth Character:** Avoid physical skeuomorphism. Use light blue tints (#EDF2FF) to signify "Lift" on hoverable elements like available time slots. This creates a "digital-first" feel that is easy to render across all devices.
+1.  **Level 0 (Base):** `background-warm` used for the main canvas.
+2.  **Level 1 (Cards):** `surface-cream` with a very soft, high-diffusion shadow (`0px 4px 20px rgba(0,0,0,0.04)`). This makes the camp cards feel like they are resting gently on the surface.
+3.  **Level 2 (Interactive):** On hover, cards lift slightly with a more pronounced shadow (`0px 12px 32px rgba(0,0,0,0.08)`) and a subtle 1px border in `primary_color`.
+
+This depth model ensures a tactile experience that feels "human-designed" rather than flat and clinical.
 
 ## Shapes
 
-The design system uses a **Soft (0.25rem)** roundedness level. This keeps the UI looking precise and athletic—sharp corners feel too aggressive (Brutalist), while pill-shapes feel too "social." 
+The shape language is defined by **Soft Geometricity**. 
 
-- **Standard Elements:** Buttons, Input Fields, and Cards use `rounded` (4px).
-- **Selection Indicators:** Small indicators (like the status dot in the admin dashboard) use `rounded-full` to stand out as geometric markers.
-- **Large Containers:** On mobile, bottom sheets for booking confirmation use `rounded-t-lg` (8px) to provide a soft tactile feel when they slide up.
+A `roundedness` of **2** (0.5rem base) is applied to all standard components like input fields and small buttons. Larger components, such as Camp Cards and "Join" CTAs, use `rounded-xl` (1.5rem) to evoke a friendly, approachable, and safe environment. This softer corner radius helps counteract the potentially "hard" connotations of the word "Pejuang."
 
 ## Components
 
 ### Buttons
-- **Primary:** Athletic Blue background, White text. High-contrast, no gradient.
-- **Action (Book Now):** Volt Green background, Pitch Black text. Used for the final "Confirm Booking" step.
-- **Secondary/Ghost:** 1px Athletic Blue border with transparent background.
+- **Primary:** Filled `primary_color_hex` with white text. Large padding (16px 32px) and `rounded-xl` shape.
+- **Secondary:** Ghost style with a `primary_color_hex` border and text. Used for "Lihat Detail" actions.
 
-### Schedule Grid Slots
-- **Available:** White background with a subtle blue border. Turns Primary Blue on click/select.
-- **Booked:** Light gray background (#F1F3F5) with a "Locked" icon or strike-through text.
-- **Hold:** Pale orange background (#FFF4E6) with a countdown timer in JetBrains Mono.
+### Cards (Camp Listings)
+- Cards must feature a high-quality image at the top with a fixed aspect ratio (4:3).
+- Content padding is generous (24px).
+- Metadata (floors, capacity) should use `label-sm` with small, secondary-colored icons to create a scannable "at-a-glance" experience.
 
-### Inputs & Forms
-- **Fields:** 1px border in gray-300. On focus, the border thickens and changes to Athletic Blue.
-- **Validation:** Error messages appear in #FF3B30 (Error Red) with a 2px offset below the field.
+### Input Fields
+- Use `surface-cream` background with a `border-subtle`. On focus, the border transitions to the primary coral. Labels are always persistent above the field.
 
-### Cards (Venue/Court)
-- Minimalist containers with high-quality images. Use `label-caps` for the sport type (e.g., "BADMINTON") as a badge in the top-right corner.
+### Trust Indicators (Testimonials/Stats)
+- Testimonial cards use a subtle italic `body-md` and include a small avatar.
+- Stats (e.g., "500+ Alumni") use `headline-md` in the primary color to draw immediate attention.
 
-### Mobile Navigation
-- A sticky bottom bar for the "Booking Summary" once slots are selected. This bar shows the total price and the "Proceed" button, ensuring the conversion path is always within thumb-reach.
+### Chips
+- Used for gender labels (Putra/Putri). These use low-saturation versions of secondary colors (soft blue/soft pink) with `label-sm` text to provide clear categorization without visual noise.

@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/expire-holds",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/offer-extensions",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/expire-extension-offers",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
