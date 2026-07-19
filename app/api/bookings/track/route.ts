@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { trackBookingSchema } from '@/lib/validation';
+import { runMaintenance } from '@/lib/maintenance';
 
 /** GET /api/bookings/track?name=&code= */
 export async function GET(request: NextRequest) {
+  await runMaintenance();
   const searchParams = request.nextUrl.searchParams;
   const name = searchParams.get('name') || '';
   const code = searchParams.get('code') || '';

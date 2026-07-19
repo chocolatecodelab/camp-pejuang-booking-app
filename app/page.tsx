@@ -50,8 +50,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full bg-surface-cream/80 backdrop-blur-md border-b border-border-subtle shadow-sm transition-all duration-300">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-3xl font-bold">apartment</span>
-            <span className="font-headline-sm font-bold tracking-tight text-primary">Camp Pejuang</span>
+            <img src="/logo-camp-pejuang.png" alt="Camp Pejuang Logo" className="h-10 w-auto object-contain" />
           </div>
 
           <div className="flex items-center gap-6">

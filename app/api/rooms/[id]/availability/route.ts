@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { runMaintenance } from '@/lib/maintenance';
 
 /** GET /api/rooms/[id]/availability?check_in=&check_out=&whatsapp= */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await runMaintenance();
   const { id: roomId } = await params;
   const searchParams = request.nextUrl.searchParams;
   const checkIn = searchParams.get('check_in');

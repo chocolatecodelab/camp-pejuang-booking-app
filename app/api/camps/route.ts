@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { runMaintenance } from '@/lib/maintenance';
 
 /** GET /api/camps — list all active camps */
 export async function GET() {
+  await runMaintenance();
+
   const { data, error } = await supabaseAdmin
     .from('camps')
     .select(`

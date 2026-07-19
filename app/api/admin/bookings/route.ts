@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { runMaintenance } from '@/lib/maintenance';
 
 /** GET /api/admin/bookings — list bookings with filters */
 export async function GET(request: NextRequest) {
+  await runMaintenance();
   const searchParams = request.nextUrl.searchParams;
   const status = searchParams.get('status');
   const campId = searchParams.get('camp_id');

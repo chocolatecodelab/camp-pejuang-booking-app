@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { runMaintenance } from '@/lib/maintenance';
 
 /** GET /api/camps/[slug] — camp detail with rooms and availability */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  await runMaintenance();
   const { slug } = await params;
 
   const { data: camp, error } = await supabaseAdmin
