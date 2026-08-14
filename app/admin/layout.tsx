@@ -63,9 +63,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="h-16 flex items-center px-6 border-b border-[#EAEAEA]">
           <Link href="/admin/dashboard" className="flex flex-col select-none">
             <span className="font-headline-sm text-lg font-bold text-[#b52330] tracking-tight leading-none">Camp Pejuang</span>
-            <span className="text-[9px] font-black text-on-surface-variant/70 tracking-widest mt-1.5 font-label-caps leading-none uppercase">
-              CAMP BOOKING MGMT
-            </span>
           </Link>
         </div>
 
@@ -77,11 +74,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.key}
                 href={item.href}
-                className={`flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-semibold transition-standard select-none ${
-                  isActive
-                    ? 'bg-[#b52330] text-white shadow-sm'
-                    : 'text-on-surface-variant hover:text-[#b52330] hover:bg-[#b52330]/5'
-                }`}
+                className={`flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-semibold transition-standard select-none ${isActive
+                  ? 'bg-[#b52330] text-white shadow-sm'
+                  : 'text-on-surface-variant hover:text-[#b52330] hover:bg-[#b52330]/5'
+                  }`}
               >
                 <span className="material-symbols-outlined text-lg" data-icon={item.icon}>
                   {item.icon}
@@ -100,7 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <div className="flex flex-col flex-grow min-w-0">
               <span className="text-xs font-bold text-on-surface truncate">Admin Camp</span>
-              <button 
+              <button
                 onClick={async () => {
                   await supabase.auth.signOut();
                   router.push('/admin/login');
@@ -116,24 +112,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* 2. MOBILE MENU OVERLAY */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* 3. MOBILE SIDEBAR (Drawer) */}
-      <aside className={`fixed top-0 bottom-0 left-0 w-64 bg-white border-r border-[#EAEAEA] z-50 flex flex-col transition-transform duration-300 md:hidden ${
-        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <aside className={`fixed top-0 bottom-0 left-0 w-64 bg-white border-r border-[#EAEAEA] z-50 flex flex-col transition-transform duration-300 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-[#EAEAEA]">
           <div className="flex flex-col select-none">
             <span className="font-headline-sm text-lg font-bold text-[#b52330] tracking-tight">Camp Pejuang</span>
             <span className="text-[8px] font-black text-on-surface-variant/70 tracking-wider mt-0.5 font-label-caps">
-              CAMP BOOKING MGMT
             </span>
           </div>
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-1 rounded hover:bg-slate-100"
           >
@@ -149,11 +143,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={item.key}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-semibold transition-standard ${
-                  isActive
-                    ? 'bg-[#b52330] text-white shadow-sm'
-                    : 'text-on-surface-variant hover:text-[#b52330] hover:bg-[#b52330]/5'
-                }`}
+                className={`flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-semibold transition-standard ${isActive
+                  ? 'bg-[#b52330] text-white shadow-sm'
+                  : 'text-on-surface-variant hover:text-[#b52330] hover:bg-[#b52330]/5'
+                  }`}
               >
                 <span className="material-symbols-outlined text-lg" data-icon={item.icon}>
                   {item.icon}
@@ -171,7 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <div className="flex flex-col flex-grow min-w-0">
               <span className="text-xs font-bold text-on-surface truncate">Admin Camp</span>
-              <button 
+              <button
                 onClick={async () => {
                   await supabase.auth.signOut();
                   router.push('/admin/login');
@@ -213,7 +206,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Right actions */}
           <div className="flex items-center gap-4 ml-auto">
             {/* Home portal access */}
-            <Link 
+            <Link
               href="/"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#EAEAEA] hover:border-[#b52330]/60 text-xs font-semibold text-on-surface-variant hover:text-[#b52330] transition-standard select-none"
               title="Portal Publik"

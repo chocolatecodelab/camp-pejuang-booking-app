@@ -321,13 +321,77 @@ export default function Home() {
         </section>
       </main>
 
+      <section className="section-gap bg-gray-50">
+        <div className="max-w-container desktop-px mobile-px">
+          <div className="rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white bg-white p-6 md:p-10">
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center text-gray-900">PETA LOKASI CAMP
+              PEJUANG</h2>
+            <div
+              className="aspect-[4/3] md:aspect-[21/9] bg-gray-100 rounded-3xl relative flex items-center justify-center overflow-hidden border border-gray-100">
+              <iframe className="w-full h-full border-0"
+                src="https://www.google.com/maps/d/embed?mid=1rCwPTpWPZoGdybjU36riktjGtvFQ500&ehbc=2E312F"
+                allowFullScreen loading="lazy"></iframe>
+              <a className="absolute bottom-4 right-4 bg-primary text-white px-6 py-2.5 rounded-full font-bold shadow-xl flex items-center gap-2 hover:scale-105 transition-transform text-sm z-10"
+                href="https://www.google.com/maps?q=Camp+Pejuang+Pare" target="_blank">
+                <span className="material-symbols-outlined text-base">map</span> Buka Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action Section (Hubungi Admin / Cari Kamar) */}
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-surface-cream border-t border-border-subtle">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#b52330] via-[#911b25] to-[#6e131b] text-white p-8 sm:p-12 md:p-16 shadow-2xl border-4 border-white">
+            {/* Background Pattern Effect */}
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none"></div>
+            <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute -left-16 -top-16 w-64 h-64 bg-black/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-8 space-y-4 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white/15 backdrop-blur-md rounded-full text-white text-xs font-bold tracking-wider uppercase border border-white/20">
+                  <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                  Siap Menjadi Pejuang?
+                </div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
+                  Temukan Hunian Nyaman & Fokus Belajar di Pare Sekarang!
+                </h2>
+                <p className="text-white/85 text-sm sm:text-base max-w-2xl leading-relaxed">
+                  Pilih kamar impian Anda secara instan dengan sistem ketersediaan real-time, atau hubungi Admin kami untuk konsultasi hunian sesuai kebutuhan Anda.
+                </p>
+              </div>
+
+              <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-4 justify-center">
+                <a
+                  href="#daftar-camp"
+                  className="px-6 py-4 bg-white text-[#b52330] rounded-xl font-bold text-center shadow-lg hover:bg-neutral-100 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group"
+                >
+                  <span className="material-symbols-outlined group-hover:scale-110 transition-transform">search</span>
+                  Cari & Pesan Kamar
+                </a>
+                <a
+                  href="https://wa.me/6285730018006?text=Halo%20Admin%20Camp%20Pejuang,%20saya%20ingin%20bertanya%20mengenai%20ketersediaan%20kamar"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-6 py-4 bg-success-green hover:bg-green-600 text-white rounded-xl font-bold text-center shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 border border-white/20 group"
+                >
+                  <span className="material-symbols-outlined group-hover:scale-110 transition-transform">chat</span>
+                  Hubungi Admin via WA
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-inverse-surface text-inverse-on-surface py-12 border-t border-border-subtle">
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary-container text-3xl font-bold">apartment</span>
-              <span className="font-headline-sm font-bold tracking-tight text-white">Camp Pejuang</span>
+              <img src="/logo-camp-pejuang.png" alt="Camp Pejuang Logo" className="h-10 w-auto object-contain" />
             </div>
             <p className="text-label-md text-inverse-on-surface/75">
               Hunian dan camp terpadu bagi pejuang bahasa Inggris di Kampung Inggris Pare, Kediri, Jawa Timur.
@@ -351,7 +415,7 @@ export default function Home() {
             </p>
             <p className="text-label-sm text-inverse-on-surface/75 flex items-center gap-2">
               <span className="material-symbols-outlined text-base">call</span>
-              +62 812-3456-7890 (WhatsApp Only)
+              +62 857-3001-8006 (WhatsApp Only)
             </p>
           </div>
         </div>
