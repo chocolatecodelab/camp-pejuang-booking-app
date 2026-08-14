@@ -121,6 +121,7 @@ export function getStatusLabel(status: string): string {
     hold: 'Menunggu Pembayaran',
     pending_verification: 'Menunggu Verifikasi',
     confirmed: 'Terkonfirmasi',
+    completed: 'Selesai (Check-Out)',
     rejected: 'Ditolak',
     expired: 'Kedaluwarsa',
     cancelled: 'Dibatalkan',
@@ -134,6 +135,7 @@ export function getStatusColor(status: string): string {
     hold: 'bg-amber-100 text-amber-800',
     pending_verification: 'bg-blue-100 text-blue-800',
     confirmed: 'bg-green-100 text-green-800',
+    completed: 'bg-teal-100 text-teal-800',
     rejected: 'bg-red-100 text-red-800',
     expired: 'bg-gray-100 text-gray-600',
     cancelled: 'bg-gray-100 text-gray-600',
@@ -159,4 +161,23 @@ export function getCampTypeColor(type: string): string {
     campuran: 'bg-purple-50 text-purple-700',
   };
   return colors[type] || 'bg-gray-100 text-gray-600';
+}
+
+/**
+ * Extract YouTube Video ID from various YouTube URL formats
+ * and return the embed URL (https://www.youtube.com/embed/VIDEO_ID).
+ * Supports watch?v=, short links (youtu.be/), embed URLs, shorts, etc.
+ */
+export function getYouTubeEmbedUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = trimmed.match(regExp);
+
+  if (match && match[2] && match[2].length === 11) {
+    return `https://www.youtube.com/embed/${match[2]}`;
+  }
+  return null;
 }

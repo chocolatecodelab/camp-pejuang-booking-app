@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCampTypeLabel, getCampTypeColor, formatRupiah } from '@/lib/utils/helpers';
+import { getCampTypeLabel, getCampTypeColor, formatRupiah, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
 import Swal from 'sweetalert2';
 
 interface PricingPackage {
@@ -33,6 +33,7 @@ interface Camp {
   description: string | null;
   facilities: string[] | null;
   cover_photo_url: string | null;
+  youtube_video_url?: string | null;
   gallery_photo_urls?: string[] | null;
   is_active: boolean;
 }
@@ -62,6 +63,7 @@ export default function AdminCampsPage() {
     description: '',
     facilitiesStr: '',
     cover_photo_url: '',
+    youtube_video_url: '',
     gallery_photo_urls: [] as string[],
     is_active: true
   });
@@ -146,6 +148,7 @@ export default function AdminCampsPage() {
         description: camp.description || '',
         facilitiesStr: camp.facilities?.join(', ') || '',
         cover_photo_url: camp.cover_photo_url || '',
+        youtube_video_url: camp.youtube_video_url || '',
         gallery_photo_urls: (camp as any).gallery_photo_urls || [],
         is_active: camp.is_active
       });
@@ -159,6 +162,7 @@ export default function AdminCampsPage() {
         description: '',
         facilitiesStr: 'Free Wifi, AC, Kamar Mandi Dalam',
         cover_photo_url: '',
+        youtube_video_url: '',
         gallery_photo_urls: [],
         is_active: true
       });
@@ -278,6 +282,7 @@ export default function AdminCampsPage() {
       description: campForm.description || null,
       facilities: campForm.facilitiesStr.split(',').map((f) => f.trim()).filter(Boolean),
       cover_photo_url: campForm.cover_photo_url || null,
+      youtube_video_url: campForm.youtube_video_url || null,
       gallery_photo_urls: campForm.gallery_photo_urls || [],
       is_active: campForm.is_active
     };
@@ -590,56 +595,77 @@ export default function AdminCampsPage() {
 
       {/* Camp Create/Edit Modal */}
       {activeModal === 'camp' && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveCamp} className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-headline-sm text-base font-bold">{editingCamp ? 'Edit Camp' : 'Tambah Camp Baru'}</h3>
-            <div className="space-y-3 text-sm">
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Nama Camp</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Camp Pejuang Putra 1"
-                  value={campForm.name}
-                  onChange={(e) => setCampForm({ ...campForm, name: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
-                />
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <form
+            onSubmit={handleSaveCamp}
+            className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col animate-scale-up overflow-hidden"
+          >
+            {/* Modal Header (Sticky Top) */}
+            <div className="p-5 border-b border-[#EAEAEA] flex justify-between items-center bg-neutral-50 shrink-0">
+              <h3 className="text-headline-sm text-base font-bold text-on-surface">
+                {editingCamp ? 'Edit Camp' : 'Tambah Camp Baru'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveModal('none')}
+                className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body (Scrollable Content) */}
+            <div className="p-6 overflow-y-auto flex-grow space-y-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Nama Camp</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Camp Pejuang Putra 1"
+                    value={campForm.name}
+                    onChange={(e) => setCampForm({ ...campForm, name: e.target.value })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Slug (URL)</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: camp-pejuang-putra-1"
+                    value={campForm.slug}
+                    onChange={(e) => setCampForm({ ...campForm, slug: e.target.value })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded text-xs focus:outline-none focus:border-primary font-mono"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Slug (URL)</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: camp-pejuang-putra-1"
-                  value={campForm.slug}
-                  onChange={(e) => setCampForm({ ...campForm, slug: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded text-xs"
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Tipe Camp</label>
+                  <select
+                    value={campForm.type}
+                    onChange={(e) => setCampForm({ ...campForm, type: e.target.value as any })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  >
+                    <option value="putra">Khusus Putra</option>
+                    <option value="putri">Khusus Putri</option>
+                    <option value="campuran">Campuran</option>
+                  </select>
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Tipe Camp</label>
-                <select
-                  value={campForm.type}
-                  onChange={(e) => setCampForm({ ...campForm, type: e.target.value as any })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
-                >
-                  <option value="putra">Khusus Putra</option>
-                  <option value="putri">Khusus Putri</option>
-                  <option value="campuran">Campuran</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Alamat Lengkap</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Jl. Asoka No. 23, Pare"
-                  value={campForm.address}
-                  onChange={(e) => setCampForm({ ...campForm, address: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
-                />
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Alamat Lengkap</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Jl. Asoka No. 23, Pare"
+                    value={campForm.address}
+                    onChange={(e) => setCampForm({ ...campForm, address: e.target.value })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -649,34 +675,61 @@ export default function AdminCampsPage() {
                   placeholder="Wifi, AC, Kamar Mandi Dalam"
                   value={campForm.facilitiesStr}
                   onChange={(e) => setCampForm({ ...campForm, facilitiesStr: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                  className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Foto Sampul (Cover)</label>
-                {campForm.cover_photo_url ? (
-                  <div className="relative group border border-border-subtle rounded p-1 max-w-[200px]">
-                    <img src={campForm.cover_photo_url} alt="Cover" className="h-20 w-auto rounded object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setCampForm({ ...campForm, cover_photo_url: '' })}
-                      className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-800 text-white rounded-full p-1 shadow-sm flex items-center justify-center"
-                      title="Hapus Cover"
-                    >
-                      <span className="material-symbols-outlined text-xs">delete</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCoverUpload}
-                      disabled={uploadingCover}
-                      className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                <label className="text-label-sm font-semibold">Deskripsi Singkat</label>
+                <textarea
+                  rows={2}
+                  placeholder="Tuliskan deskripsi lingkungan, keunggulan, atau catatan camp..."
+                  value={campForm.description}
+                  onChange={(e) => setCampForm({ ...campForm, description: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary text-xs"
+                />
+              </div>
+
+              {/* Video Sampul (YouTube Link) */}
+              <div className="space-y-2 border border-[#EAEAEA] py-3 px-3 my-2 bg-neutral-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <label className="text-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-red-600 text-lg font-bold">smart_display</span>
+                    Link Video YouTube Sampul (Tur Camp)
+                  </label>
+                  {getYouTubeEmbedUrl(campForm.youtube_video_url) ? (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">check_circle</span>
+                      Video Valid
+                    </span>
+                  ) : campForm.youtube_video_url ? (
+                    <span className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                      ⚠️ Link tidak valid
+                    </span>
+                  ) : null}
+                </div>
+                
+                <input
+                  type="url"
+                  placeholder="Contoh: https://www.youtube.com/watch?v=dQw4w9WgXcQ atau https://youtu.be/..."
+                  value={campForm.youtube_video_url}
+                  onChange={(e) => setCampForm({ ...campForm, youtube_video_url: e.target.value })}
+                  className="w-full p-2 border border-[#EAEAEA] bg-white rounded text-xs outline-none focus:border-primary font-mono"
+                />
+                <p className="text-[11px] text-outline">
+                  Link ini akan menampilkan pemutar video YouTube di bagian sampul utama halaman detail camp pengunjung.
+                </p>
+
+                {/* Interactive Live Video Preview inside Admin Modal */}
+                {getYouTubeEmbedUrl(campForm.youtube_video_url) && (
+                  <div className="mt-3 rounded-lg overflow-hidden border border-border-subtle bg-black shadow-sm aspect-video max-w-full">
+                    <iframe
+                      src={getYouTubeEmbedUrl(campForm.youtube_video_url)!}
+                      title="Pratinjau Video Sampul"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full border-0"
                     />
-                    {uploadingCover && <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>}
                   </div>
                 )}
               </div>
@@ -721,22 +774,24 @@ export default function AdminCampsPage() {
                   id="camp-active"
                   checked={campForm.is_active}
                   onChange={(e) => setCampForm({ ...campForm, is_active: e.target.checked })}
+                  className="w-4 h-4 accent-primary"
                 />
-                <label htmlFor="camp-active" className="text-label-sm font-semibold cursor-pointer">Camp Aktif (Ditampilkan Publik)</label>
+                <label htmlFor="camp-active" className="text-label-sm font-semibold cursor-pointer select-none">Camp Aktif (Ditampilkan Publik)</label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-[#EAEAEA]">
+            {/* Modal Footer (Sticky Bottom) */}
+            <div className="p-4 bg-neutral-50 border-t border-[#EAEAEA] flex justify-end gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveModal('none')}
-                className="px-4 py-2 border border-[#EAEAEA] rounded text-xs font-bold text-on-surface-variant hover:bg-neutral-100"
+                className="px-4 py-2 border border-outline-variant hover:bg-neutral-200 text-on-surface font-bold text-xs rounded transition-colors"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary text-white rounded text-xs font-bold shadow hover:bg-primary-container"
+                className="px-5 py-2 bg-primary text-white font-bold text-xs rounded hover:bg-[#93000a] transition-colors shadow-sm"
               >
                 Simpan Camp
               </button>
@@ -747,10 +802,27 @@ export default function AdminCampsPage() {
 
       {/* Room Create/Edit Modal */}
       {activeModal === 'room' && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveRoom} className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-headline-sm text-base font-bold">{editingRoom ? 'Edit Kamar' : 'Tambah Kamar Baru'}</h3>
-            <div className="space-y-3 text-sm">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <form
+            onSubmit={handleSaveRoom}
+            className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col animate-scale-up overflow-hidden"
+          >
+            {/* Header (Sticky Top) */}
+            <div className="p-5 border-b border-[#EAEAEA] flex justify-between items-center bg-neutral-50 shrink-0">
+              <h3 className="text-headline-sm text-base font-bold text-on-surface">
+                {editingRoom ? 'Edit Kamar' : 'Tambah Kamar Baru'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveModal('none')}
+                className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Body (Scrollable) */}
+            <div className="p-6 overflow-y-auto flex-grow space-y-4 text-sm">
               <div className="space-y-1">
                 <label className="text-label-sm font-semibold">Nama Kamar</label>
                 <input
@@ -759,7 +831,7 @@ export default function AdminCampsPage() {
                   placeholder="Contoh: Kamar 101, Kamar A-3"
                   value={roomForm.name}
                   onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                  className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -768,7 +840,7 @@ export default function AdminCampsPage() {
                 <select
                   value={roomForm.floor_label}
                   onChange={(e) => setRoomForm({ ...roomForm, floor_label: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                  className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
                 >
                   <option value="Lantai 1">Lantai 1</option>
                   <option value="Lantai 2">Lantai 2</option>
@@ -816,22 +888,26 @@ export default function AdminCampsPage() {
                   id="room-active"
                   checked={roomForm.is_active}
                   onChange={(e) => setRoomForm({ ...roomForm, is_active: e.target.checked })}
+                  className="w-4 h-4 accent-primary"
                 />
-                <label htmlFor="room-active" className="text-label-sm font-semibold cursor-pointer">Kamar Aktif (Tersedia untuk Booking)</label>
+                <label htmlFor="room-active" className="text-label-sm font-semibold cursor-pointer select-none">
+                  Kamar Aktif (Tersedia untuk Booking)
+                </label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-[#EAEAEA]">
+            {/* Footer (Sticky Bottom) */}
+            <div className="p-4 bg-neutral-50 border-t border-[#EAEAEA] flex justify-end gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveModal('none')}
-                className="px-4 py-2 border border-[#EAEAEA] rounded text-xs font-bold text-on-surface-variant hover:bg-neutral-100"
+                className="px-4 py-2 border border-outline-variant hover:bg-neutral-200 text-on-surface font-bold text-xs rounded transition-colors"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary text-white rounded text-xs font-bold shadow hover:bg-primary-container"
+                className="px-5 py-2 bg-primary text-white font-bold text-xs rounded hover:bg-[#93000a] transition-colors shadow-sm"
               >
                 Simpan Kamar
               </button>
@@ -842,10 +918,27 @@ export default function AdminCampsPage() {
 
       {/* Pricing Package Create/Edit Modal */}
       {activeModal === 'package' && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSavePackage} className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-headline-sm text-base font-bold">{editingPackage ? 'Edit Paket Harga' : 'Tambah Paket Harga'}</h3>
-            <div className="space-y-3 text-sm">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <form
+            onSubmit={handleSavePackage}
+            className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col animate-scale-up overflow-hidden"
+          >
+            {/* Header (Sticky Top) */}
+            <div className="p-5 border-b border-[#EAEAEA] flex justify-between items-center bg-neutral-50 shrink-0">
+              <h3 className="text-headline-sm text-base font-bold text-on-surface">
+                {editingPackage ? 'Edit Paket Harga' : 'Tambah Paket Harga'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveModal('none')}
+                className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Body (Scrollable) */}
+            <div className="p-6 overflow-y-auto flex-grow space-y-4 text-sm">
               <div className="space-y-1">
                 <label className="text-label-sm font-semibold">Label Durasi</label>
                 <input
@@ -854,55 +947,60 @@ export default function AdminCampsPage() {
                   placeholder="Contoh: 1 Bulan, 2 Minggu"
                   value={packageForm.label}
                   onChange={(e) => setPackageForm({ ...packageForm, label: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
+                  className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Durasi (Hari)</label>
-                <input
-                  type="number"
-                  required
-                  placeholder="30"
-                  value={packageForm.duration_days}
-                  onChange={(e) => setPackageForm({ ...packageForm, duration_days: Number(e.target.value) })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Durasi (Hari)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="30"
+                    value={packageForm.duration_days}
+                    onChange={(e) => setPackageForm({ ...packageForm, duration_days: Number(e.target.value) })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Urutan Sortir (sort_order)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="1"
+                    value={packageForm.sort_order}
+                    onChange={(e) => setPackageForm({ ...packageForm, sort_order: Number(e.target.value) })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Harga Sewa (Rp)</label>
-                <input
-                  type="number"
-                  required
-                  placeholder="500000"
-                  value={packageForm.price}
-                  onChange={(e) => setPackageForm({ ...packageForm, price: Number(e.target.value) })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Harga Sewa (Rp)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="500000"
+                    value={packageForm.price}
+                    onChange={(e) => setPackageForm({ ...packageForm, price: Number(e.target.value) })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Minimal DP (Rp, Kosongkan jika harus bayar lunas)</label>
-                <input
-                  type="number"
-                  placeholder="150000"
-                  value={packageForm.min_dp_amount}
-                  onChange={(e) => setPackageForm({ ...packageForm, min_dp_amount: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Urutan Sortir (sort_order)</label>
-                <input
-                  type="number"
-                  required
-                  placeholder="1"
-                  value={packageForm.sort_order}
-                  onChange={(e) => setPackageForm({ ...packageForm, sort_order: Number(e.target.value) })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded"
-                />
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Minimal DP (Rp)</label>
+                  <input
+                    type="number"
+                    placeholder="150000"
+                    value={packageForm.min_dp_amount}
+                    onChange={(e) => setPackageForm({ ...packageForm, min_dp_amount: e.target.value })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary text-xs"
+                  />
+                  <p className="text-[10px] text-outline">Kosongkan jika harus bayar lunas.</p>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 pt-2">
@@ -911,22 +1009,26 @@ export default function AdminCampsPage() {
                   id="pkg-active"
                   checked={packageForm.is_active}
                   onChange={(e) => setPackageForm({ ...packageForm, is_active: e.target.checked })}
+                  className="w-4 h-4 accent-primary"
                 />
-                <label htmlFor="pkg-active" className="text-label-sm font-semibold cursor-pointer">Paket Aktif</label>
+                <label htmlFor="pkg-active" className="text-label-sm font-semibold cursor-pointer select-none">
+                  Paket Aktif (Ditampilkan Publik)
+                </label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-[#EAEAEA]">
+            {/* Footer (Sticky Bottom) */}
+            <div className="p-4 bg-neutral-50 border-t border-[#EAEAEA] flex justify-end gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveModal('none')}
-                className="px-4 py-2 border border-[#EAEAEA] rounded text-xs font-bold text-on-surface-variant hover:bg-neutral-100"
+                className="px-4 py-2 border border-outline-variant hover:bg-neutral-200 text-on-surface font-bold text-xs rounded transition-colors"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary text-white rounded text-xs font-bold shadow hover:bg-primary-container"
+                className="px-5 py-2 bg-primary text-white font-bold text-xs rounded hover:bg-[#93000a] transition-colors shadow-sm"
               >
                 Simpan Paket
               </button>

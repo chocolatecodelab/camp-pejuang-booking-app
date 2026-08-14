@@ -6,7 +6,7 @@
 // ---------- Enum types ----------
 
 export type CampType = 'putra' | 'putri' | 'campuran';
-export type BookingStatus = 'hold' | 'pending_verification' | 'confirmed' | 'rejected' | 'expired' | 'cancelled';
+export type BookingStatus = 'hold' | 'pending_verification' | 'confirmed' | 'completed' | 'rejected' | 'expired' | 'cancelled';
 export type PaymentType = 'dp' | 'full';
 export type PaymentChannel = 'qris' | 'transfer_bank';
 
@@ -21,6 +21,7 @@ export type Camp = {
   description: string | null;
   facilities: string[] | null;
   cover_photo_url: string | null;
+  youtube_video_url: string | null;
   gallery_photo_urls: string[] | null;
   latitude: number | null;
   longitude: number | null;
@@ -120,7 +121,7 @@ export type SystemSettings = {
 
 // ---------- Insert types ----------
 
-export type CampInsert = Omit<Camp, 'id' | 'created_at' | 'is_active' | 'extension_window_days' | 'extension_response_hours' | 'description' | 'facilities' | 'cover_photo_url' | 'gallery_photo_urls' | 'latitude' | 'longitude'> & {
+export type CampInsert = Omit<Camp, 'id' | 'created_at' | 'is_active' | 'extension_window_days' | 'extension_response_hours' | 'description' | 'facilities' | 'cover_photo_url' | 'youtube_video_url' | 'gallery_photo_urls' | 'latitude' | 'longitude'> & {
   id?: string;
   is_active?: boolean;
   extension_window_days?: number;
@@ -128,6 +129,7 @@ export type CampInsert = Omit<Camp, 'id' | 'created_at' | 'is_active' | 'extensi
   description?: string | null;
   facilities?: string[] | null;
   cover_photo_url?: string | null;
+  youtube_video_url?: string | null;
   gallery_photo_urls?: string[] | null;
   latitude?: number | null;
   longitude?: number | null;

@@ -14,6 +14,7 @@ create type booking_status as enum (
   'hold',                 -- baru pilih kamar, belum upload bukti
   'pending_verification', -- sudah upload bukti, menunggu admin
   'confirmed',            -- disetujui admin
+  'completed',            -- sewa selesai / check-out awal oleh admin
   'rejected',             -- ditolak admin
   'expired',              -- hold kedaluwarsa, tidak upload bukti
   'cancelled'             -- dibatalkan admin setelah confirmed
@@ -33,6 +34,7 @@ create table camps (
   description text,
   facilities text[],                        -- ['Wi-Fi Cepat','Dapur Umum','Air Minum']
   cover_photo_url text,
+  youtube_video_url text,
   gallery_photo_urls text[],
   latitude numeric(10,7),
   longitude numeric(10,7),

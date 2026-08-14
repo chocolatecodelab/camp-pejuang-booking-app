@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { formatRupiah, getCampTypeLabel, getCampTypeColor } from '@/lib/utils/helpers';
+import { formatRupiah, getCampTypeLabel, getCampTypeColor, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
 
 interface CampListing {
   id: string;
@@ -13,6 +13,7 @@ interface CampListing {
   description: string;
   facilities: string[];
   cover_photo_url: string | null;
+  youtube_video_url: string | null;
   room_count: number;
   min_price: number;
 }
@@ -220,6 +221,12 @@ export default function Home() {
                       <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold ${getCampTypeColor(camp.type)}`}>
                         Camp {getCampTypeLabel(camp.type)}
                       </span>
+                      {camp.youtube_video_url && getYouTubeEmbedUrl(camp.youtube_video_url) && (
+                        <span className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-label-sm font-bold bg-red-600 text-white shadow flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">play_circle</span>
+                          Video Tur
+                        </span>
+                      )}
                     </div>
 
                     {/* Camp Details */}

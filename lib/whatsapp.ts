@@ -115,3 +115,19 @@ export function waRejectPayment(phone: string, bookingCode: string, customerName
 
   return waLink(phone, message);
 }
+
+/** Admin completes/checks-out tenant sewa */
+export function waBookingCompleted(phone: string, bookingCode: string, customerName: string, notes?: string): string {
+  let message =
+    `🏠 *Sewa Kamar Selesai (Check-Out)*\n\n` +
+    `Halo ${customerName},\n` +
+    `Masa sewa Anda untuk booking *${bookingCode}* di Camp Pejuang telah dinyatakan selesai / check-out.\n\n`;
+
+  if (notes) {
+    message += `📝 Catatan: ${notes}\n\n`;
+  }
+
+  message += `Terima kasih telah mempercayai Camp Pejuang sebagai hunian belajar Anda! Semoga sukses selalu! 🙏✨`;
+
+  return waLink(phone, message);
+}

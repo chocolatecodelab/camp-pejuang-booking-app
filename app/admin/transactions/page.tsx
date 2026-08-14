@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { formatRupiah, formatDateRange, getStatusLabel, getStatusColor } from '@/lib/utils/helpers';
-import { waConfirmPayment, waRejectPayment } from '@/lib/whatsapp';
+import { waConfirmPayment, waRejectPayment, waBookingCompleted } from '@/lib/whatsapp';
 import Swal from 'sweetalert2';
 
 interface Booking {
@@ -275,6 +275,65 @@ export default function AdminTransactionsPage() {
     }
   };
 
+  const handleCheckout = async (targetBooking?: Booking) => {
+    const b = targetBooking || selectedBooking;
+    if (!b) return;
+
+    const { value: notes, isConfirmed } = await Swal.fire({
+      title: 'Selesai Sewa / Check-Out Awal?',
+      html: `<div class="text-left text-sm space-y-2 mt-2">` +
+            `<p>Apakah penyewa <strong>${b.customer_name}</strong> telah selesai menyewa dan mengosongkan <strong>${b.rooms?.name} (${b.rooms?.camps?.name})</strong>?</p>` +
+            `<p class="text-xs text-teal-800 bg-teal-50 p-2.5 rounded border border-teal-200">ℹ️ Kamar akan langsung rilis dan status kamar menjadi <strong>Tersedia (Kosong)</strong> untuk pemesan baru.</p>` +
+            `</div>`,
+      input: 'text',
+      inputPlaceholder: 'Catatan opsional (misal: keluar H-5 urusan keluarga)',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#0d9488',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, Selesaikan Sewa!',
+      cancelButtonText: 'Batal',
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/bookings/${b.id}/checkout`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal memproses check-out sewa');
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Sewa Berhasil Diselesaikan!',
+        text: `Status sewa ${b.customer_name} diubah menjadi Selesai (Check-Out). Kamar ${b.rooms?.name} telah dirilis dan tersedia kembali.`,
+        confirmButtonColor: '#0d9488',
+      });
+
+      // Open WhatsApp link to send completion notice
+      const waLink = waBookingCompleted(b.whatsapp_number, b.booking_code, b.customer_name, notes || undefined);
+      window.open(waLink, '_blank');
+
+      if (selectedBooking?.id === b.id) {
+        setSelectedBooking(null);
+      }
+      fetchBookings();
+    } catch (err: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Terjadi kesalahan sistem',
+        confirmButtonColor: '#b52330',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -308,7 +367,8 @@ export default function AdminTransactionsPage() {
             <option value="all">Semua Status</option>
             <option value="hold">Hold (Menunggu Transfer)</option>
             <option value="pending_verification">Pending Verifikasi</option>
-            <option value="confirmed">Confirmed (Lunas)</option>
+            <option value="confirmed">Confirmed (Lunas/Aktif)</option>
+            <option value="completed">Completed (Selesai/Check-out)</option>
             <option value="rejected">Rejected (Ditolak)</option>
             <option value="expired">Expired</option>
             <option value="cancelled">Cancelled</option>
@@ -377,12 +437,24 @@ export default function AdminTransactionsPage() {
                       </span>
                     </td>
                     <td className="p-4 text-center">
-                      <button
-                        onClick={() => openDetail(b)}
-                        className="px-3.5 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-on-surface font-bold text-xs rounded transition-colors"
-                      >
-                        Detail & Verifikasi
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => openDetail(b)}
+                          className="px-3.5 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-on-surface font-bold text-xs rounded transition-colors"
+                        >
+                          Detail & Verifikasi
+                        </button>
+                        {b.status === 'confirmed' && (
+                          <button
+                            onClick={() => handleCheckout(b)}
+                            className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded transition-colors inline-flex items-center gap-1 shadow-sm"
+                            title="Tandai penyewa telah selesai/keluar (kamar kosong)"
+                          >
+                            <span className="material-symbols-outlined text-xs">logout</span>
+                            Selesai Sewa
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -529,6 +601,16 @@ export default function AdminTransactionsPage() {
               >
                 Tutup
               </button>
+
+              {selectedBooking.status === 'confirmed' && (
+                <button
+                  onClick={() => handleCheckout()}
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded transition-colors flex items-center gap-1 shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-sm">logout</span>
+                  Selesai Sewa / Check-Out (Kamar Kosong)
+                </button>
+              )}
 
               {selectedBooking.status === 'pending_verification' && (
                 <div className="flex items-center gap-2">

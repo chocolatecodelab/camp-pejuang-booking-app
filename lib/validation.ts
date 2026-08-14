@@ -38,6 +38,7 @@ export const campSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   facilities: z.array(z.string()).optional().nullable(),
   cover_photo_url: z.string().optional().nullable(),
+  youtube_video_url: z.string().optional().nullable(),
   gallery_photo_urls: z.array(z.string()).optional().nullable(),
   latitude: z.number().min(-90).max(90).optional().nullable(),
   longitude: z.number().min(-180).max(180).optional().nullable(),
@@ -77,6 +78,11 @@ export const cancelBookingSchema = z.object({
   admin_email: z.string().optional(),
 });
 
+export const checkoutBookingSchema = z.object({
+  notes: z.string().max(500).optional().nullable(),
+  admin_email: z.string().optional(),
+});
+
 export const settingsSchema = z.object({
   admin_whatsapp: z.string().regex(/^62\d{8,13}$/).optional(),
   qris_image_url: z.string().url().optional().nullable(),
@@ -93,4 +99,5 @@ export type RoomInput = z.infer<typeof roomSchema>;
 export type PricingPackageInput = z.infer<typeof pricingPackageSchema>;
 export type RejectBookingInput = z.infer<typeof rejectBookingSchema>;
 export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
+export type CheckoutBookingInput = z.infer<typeof checkoutBookingSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;

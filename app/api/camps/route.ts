@@ -39,6 +39,7 @@ export async function GET() {
       description: camp.description,
       facilities: camp.facilities,
       cover_photo_url: camp.cover_photo_url,
+      youtube_video_url: camp.youtube_video_url,
       room_count: rooms.length,
       min_price: minPrice,
     };

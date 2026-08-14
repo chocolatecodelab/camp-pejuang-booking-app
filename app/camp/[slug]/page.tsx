@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { formatRupiah, getCampTypeLabel, getCampTypeColor, getTodayStr, calculateCheckoutDate } from '@/lib/utils/helpers';
+import { formatRupiah, getCampTypeLabel, getCampTypeColor, getTodayStr, calculateCheckoutDate, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
 
 interface PricingPackage {
   id: string;
@@ -30,6 +30,7 @@ interface Camp {
   description: string | null;
   facilities: string[] | null;
   cover_photo_url: string | null;
+  youtube_video_url?: string | null;
   gallery_photo_urls: string[] | null;
   latitude: number | null;
   longitude: number | null;
@@ -247,20 +248,41 @@ export default function CampDetailPage() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Main Exterior/Cover Images (Kiri - 2 Column) */}
           <div className="md:col-span-2 flex flex-col gap-6">
-            {/* Top Photo */}
-            <div className="relative aspect-[1/1] w-full rounded-2xl overflow-hidden shadow-sm border border-border-subtle bg-surface-container-high">
-              <img
-                src={camp.cover_photo_url || "https://images.unsplash.com/photo-1596276122653-651a3898309f?auto=format&fit=crop&q=80&w=800"}
-                alt={camp.name}
-                className="w-full h-full object-cover"
-              />
-              <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold shadow ${getCampTypeColor(camp.type)}`}>
-                {getCampTypeLabel(camp.type).toUpperCase()}
-              </span>
-              <span className="absolute top-4 left-24 px-3 py-1 rounded-full text-label-sm font-bold bg-green-100 text-green-800 shadow-sm">
-                Tersedia
-              </span>
-            </div>
+            {/* Top Media (YouTube Video Player or Photo Fallback) */}
+            {getYouTubeEmbedUrl(camp.youtube_video_url) ? (
+              <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-lg border border-border-subtle bg-black group">
+                <iframe
+                  src={`${getYouTubeEmbedUrl(camp.youtube_video_url)}?autoplay=0&rel=0`}
+                  title={`Video Tur ${camp.name}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  loading="lazy"
+                  className="w-full h-full border-0"
+                />
+                <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold shadow-md pointer-events-none z-10 ${getCampTypeColor(camp.type)}`}>
+                  {getCampTypeLabel(camp.type).toUpperCase()}
+                </span>
+                <span className="absolute top-4 left-28 px-3 py-1 rounded-full text-label-sm font-bold bg-red-600 text-white shadow-md pointer-events-none z-10 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs font-bold">play_circle</span>
+                  Video Tur Camp
+                </span>
+              </div>
+            ) : (
+              <div className="relative aspect-[1/1] w-full rounded-2xl overflow-hidden shadow-sm border border-border-subtle bg-surface-container-high">
+                <img
+                  src={camp.cover_photo_url || "https://images.unsplash.com/photo-1596276122653-651a3898309f?auto=format&fit=crop&q=80&w=800"}
+                  alt={camp.name}
+                  className="w-full h-full object-cover"
+                />
+                <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold shadow ${getCampTypeColor(camp.type)}`}>
+                  {getCampTypeLabel(camp.type).toUpperCase()}
+                </span>
+                <span className="absolute top-4 left-24 px-3 py-1 rounded-full text-label-sm font-bold bg-green-100 text-green-800 shadow-sm">
+                  Tersedia
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Carousel Slider & Kapasitas (Kanan - 1 Column) */}
