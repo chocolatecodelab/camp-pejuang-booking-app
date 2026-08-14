@@ -181,3 +181,71 @@ export function getYouTubeEmbedUrl(url: string | null | undefined): string | nul
   }
   return null;
 }
+
+/**
+ * Compress image on client-side before uploading.
+ * Converts large camera photos (e.g. 5MB–10MB) to optimized WebP format (~150KB–300KB)
+ * while preserving visual clarity.
+ */
+export async function compressImage(
+  file: File,
+  maxWidth = 1200,
+  maxHeight = 1200,
+  quality = 0.8
+): Promise<File> {
+  if (typeof window === 'undefined' || !file || !file.type || !file.type.startsWith('image/')) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+            const compressedFile = new File([blob], newFileName, {
+              type: 'image/webp',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+}

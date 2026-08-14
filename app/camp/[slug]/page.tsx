@@ -59,13 +59,22 @@ function RoomCard({
     ? room.room_photo_urls
     : ["https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600"];
 
+  // Auto-slide room photos every 4 seconds
+  useEffect(() => {
+    if (photos.length <= 1) return;
+    const timer = setInterval(() => {
+      setActivePhoto((prev) => (prev + 1) % photos.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [photos.length]);
+
   return (
     <div className="bg-surface-cream rounded-xl border border-border-subtle shadow-sm overflow-hidden flex flex-col h-full transition-all hover:shadow-md">
-      <div className="aspect-[4/3] w-full bg-surface-container-high relative group select-none">
+      <div className="aspect-[4/5] w-full bg-surface-container-high relative group select-none overflow-hidden">
         <img
           src={photos[activePhoto]}
           alt={`${room.name} ${activePhoto + 1}`}
-          className="w-full h-full object-cover transition-all duration-300"
+          className="w-full h-full object-cover transition-all duration-300 hover:scale-105"
         />
 
         {/* Navigation arrows for card */}
@@ -182,6 +191,17 @@ export default function CampDetailPage() {
     fetchDetail();
   }, [slug, router]);
 
+  const slidesCount = camp ? [camp.cover_photo_url, ...(camp.gallery_photo_urls || [])].filter(Boolean).length : 0;
+
+  // Auto-slide top hero gallery every 4.5 seconds (Top-level hook)
+  useEffect(() => {
+    if (slidesCount <= 1) return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % slidesCount);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [slidesCount]);
+
   // Helper to check if a room is locked (booked) on the selected dates
   const isRoomBooked = (roomId: string): boolean => {
     if (!checkInDate) return false;
@@ -288,7 +308,7 @@ export default function CampDetailPage() {
           {/* Carousel Slider & Kapasitas (Kanan - 1 Column) */}
           <div className="flex flex-col gap-6">
             {/* Carousel Slider */}
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden shadow-sm bg-surface-container-high border border-border-subtle group">
+            <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-sm bg-surface-container-high border border-border-subtle group">
               {slides.length > 0 ? (
                 <>
                   <img

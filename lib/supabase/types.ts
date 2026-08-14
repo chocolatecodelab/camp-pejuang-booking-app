@@ -116,6 +116,8 @@ export type SystemSettings = {
   bank_name: string | null;
   bank_account_number: string | null;
   bank_account_holder: string | null;
+  is_qris_active: boolean;
+  is_bank_active: boolean;
   updated_at: string;
 };
 
@@ -187,12 +189,14 @@ export type AdminProfileInsert = Omit<AdminProfile, 'role' | 'full_name'> & {
   role?: string;
 };
 
-export type SystemSettingsInsert = Omit<SystemSettings, 'updated_at' | 'admin_whatsapp' | 'qris_image_url' | 'bank_name' | 'bank_account_number' | 'bank_account_holder'> & {
+export type SystemSettingsInsert = Omit<SystemSettings, 'updated_at' | 'admin_whatsapp' | 'qris_image_url' | 'bank_name' | 'bank_account_number' | 'bank_account_holder' | 'is_qris_active' | 'is_bank_active'> & {
   admin_whatsapp?: string;
   qris_image_url?: string | null;
   bank_name?: string | null;
   bank_account_number?: string | null;
   bank_account_holder?: string | null;
+  is_qris_active?: boolean;
+  is_bank_active?: boolean;
   updated_at?: string;
 };
 

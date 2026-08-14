@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCampTypeLabel, getCampTypeColor, formatRupiah, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
+import { getCampTypeLabel, getCampTypeColor, formatRupiah, getYouTubeEmbedUrl, compressImage } from '@/lib/utils/helpers';
 import Swal from 'sweetalert2';
 
 interface PricingPackage {
@@ -25,7 +25,7 @@ interface Room {
 }
 
 interface Camp {
-  id?: string;
+  id: string;
   name: string;
   slug: string;
   type: 'putra' | 'putri' | 'campuran';
@@ -102,12 +102,10 @@ export default function AdminCampsPage() {
   const fetchCamps = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/camps');
+      const res = await fetch('/api/admin/camps');
       const data = await res.json();
       if (data.camps) {
-        // Fetch full camps (including inactive ones) via admin API using destructuring of 'camps' instead of 'data'
-        const { camps: adminCamps } = await fetch('/api/admin/camps').then((r) => r.json());
-        setCamps(adminCamps || data.camps);
+        setCamps(data.camps);
       }
     } catch (err) {
       console.error(err);
@@ -171,14 +169,15 @@ export default function AdminCampsPage() {
   };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploadingCover(true);
     try {
+      const compressedFile = await compressImage(files[0]);
       const formData = new FormData();
       formData.append('campId', editingCamp?.id || 'temp-camp');
-      formData.append('file', file);
+      formData.append('file', compressedFile);
       formData.append('isRoom', 'false');
 
       const res = await fetch('/api/admin/camps/upload-photo', {
@@ -210,10 +209,10 @@ export default function AdminCampsPage() {
       const uploadedUrls: string[] = [...campForm.gallery_photo_urls];
 
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        const compressedFile = await compressImage(files[i]);
         const formData = new FormData();
         formData.append('campId', editingCamp?.id || 'temp-camp');
-        formData.append('file', file);
+        formData.append('file', compressedFile);
         formData.append('isRoom', 'false');
 
         const res = await fetch('/api/admin/camps/upload-photo', {
@@ -245,10 +244,10 @@ export default function AdminCampsPage() {
       const uploadedUrls: string[] = [...roomForm.room_photo_urls];
 
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        const compressedFile = await compressImage(files[i]);
         const formData = new FormData();
         formData.append('campId', selectedCamp.id!);
-        formData.append('file', file);
+        formData.append('file', compressedFile);
         formData.append('isRoom', 'true');
         formData.append('roomId', editingRoom?.id || 'temp-room');
 
@@ -431,6 +430,111 @@ export default function AdminCampsPage() {
     }
   };
 
+  const handleDeleteCamp = async (camp: Camp) => {
+    const result = await Swal.fire({
+      title: 'Hapus Camp?',
+      text: `Apakah Anda yakin ingin menghapus camp "${camp.name}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#b52330',
+      cancelButtonColor: '#6e6e6e',
+      confirmButtonText: 'Ya, Hapus Camp',
+      cancelButtonText: 'Batal'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch('/api/admin/camps', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: camp.id })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menghapus camp');
+
+      Swal.fire({ icon: 'success', title: 'Terhapus', text: `Camp "${camp.name}" berhasil dihapus`, confirmButtonColor: '#b52330' });
+      if (selectedCamp?.id === camp.id) {
+        setSelectedCamp(null);
+        setRooms([]);
+        setSelectedRoom(null);
+        setPackages([]);
+      }
+      fetchCamps();
+    } catch (err: any) {
+      Swal.fire({ icon: 'error', title: 'Gagal Hapus', text: err.message, confirmButtonColor: '#b52330' });
+    }
+  };
+
+  const handleDeleteRoom = async (room: Room) => {
+    if (!selectedCamp) return;
+    const result = await Swal.fire({
+      title: 'Hapus Kamar?',
+      text: `Apakah Anda yakin ingin menghapus kamar "${room.name}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#b52330',
+      cancelButtonColor: '#6e6e6e',
+      confirmButtonText: 'Ya, Hapus Kamar',
+      cancelButtonText: 'Batal'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/camps/${selectedCamp.id}/rooms`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: room.id })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menghapus kamar');
+
+      Swal.fire({ icon: 'success', title: 'Terhapus', text: `Kamar "${room.name}" berhasil dihapus`, confirmButtonColor: '#b52330' });
+      if (selectedRoom?.id === room.id) {
+        setSelectedRoom(null);
+        setPackages([]);
+      }
+      fetchRooms(selectedCamp.id!);
+    } catch (err: any) {
+      Swal.fire({ icon: 'error', title: 'Gagal Hapus', text: err.message, confirmButtonColor: '#b52330' });
+    }
+  };
+
+  const handleDeletePackage = async (pkg: PricingPackage) => {
+    if (!selectedRoom) return;
+    const result = await Swal.fire({
+      title: 'Hapus Paket Harga?',
+      text: `Apakah Anda yakin ingin menghapus paket "${pkg.label}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#b52330',
+      cancelButtonColor: '#6e6e6e',
+      confirmButtonText: 'Ya, Hapus Paket',
+      cancelButtonText: 'Batal'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/rooms/${selectedRoom.id}/pricing`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: pkg.id })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menghapus paket harga');
+
+      Swal.fire({ icon: 'success', title: 'Terhapus', text: `Paket "${pkg.label}" berhasil dihapus`, confirmButtonColor: '#b52330' });
+      fetchPackages(selectedRoom.id!);
+    } catch (err: any) {
+      Swal.fire({ icon: 'error', title: 'Gagal Hapus', text: err.message, confirmButtonColor: '#b52330' });
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -474,15 +578,28 @@ export default function AdminCampsPage() {
                     <span className="text-[10px] bg-red-100 text-red-800 px-1 py-0.2 rounded ml-1 font-bold">Non-aktif</span>
                   )}
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenCampModal(camp);
-                  }}
-                  className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
-                >
-                  <span className="material-symbols-outlined text-sm font-bold">edit</span>
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenCampModal(camp);
+                    }}
+                    className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
+                    title="Edit Camp"
+                  >
+                    <span className="material-symbols-outlined text-sm font-bold">edit</span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCamp(camp);
+                    }}
+                    className="p-1 rounded hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
+                    title="Hapus Camp"
+                  >
+                    <span className="material-symbols-outlined text-sm font-bold">delete</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -526,15 +643,28 @@ export default function AdminCampsPage() {
                       <p className="font-bold text-on-surface">{room.name}</p>
                       <p className="text-[10px] text-outline font-medium">{room.floor_label}</p>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenRoomModal(room);
-                      }}
-                      className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-sm font-bold">edit</span>
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenRoomModal(room);
+                        }}
+                        className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
+                        title="Edit Kamar"
+                      >
+                        <span className="material-symbols-outlined text-sm font-bold">edit</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteRoom(room);
+                        }}
+                        className="p-1 rounded hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
+                        title="Hapus Kamar"
+                      >
+                        <span className="material-symbols-outlined text-sm font-bold">delete</span>
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -578,12 +708,22 @@ export default function AdminCampsPage() {
                         <p className="text-[10px] text-success-green font-medium">Bisa DP mulai {formatRupiah(pkg.min_dp_amount)}</p>
                       )}
                     </div>
-                    <button
-                      onClick={() => handleOpenPackageModal(pkg)}
-                      className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-sm font-bold">edit</span>
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleOpenPackageModal(pkg)}
+                        className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
+                        title="Edit Paket"
+                      >
+                        <span className="material-symbols-outlined text-sm font-bold">edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeletePackage(pkg)}
+                        className="p-1 rounded hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
+                        title="Hapus Paket"
+                      >
+                        <span className="material-symbols-outlined text-sm font-bold">delete</span>
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -690,6 +830,49 @@ export default function AdminCampsPage() {
                 />
               </div>
 
+              {/* Foto Sampul Utama Camp (Cover Photo) */}
+              <div className="space-y-2 border border-[#EAEAEA] py-3 px-3 my-2 bg-neutral-50 rounded-lg">
+                <label className="text-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-primary text-lg font-bold">image</span>
+                  Foto Sampul Utama Camp (Cover Photo)
+                </label>
+                {campForm.cover_photo_url ? (
+                  <div className="relative border border-border-subtle rounded-lg p-2 bg-white flex items-center gap-3">
+                    <img
+                      src={campForm.cover_photo_url}
+                      alt="Foto Sampul"
+                      className="h-20 w-16 object-cover rounded shadow-sm border"
+                    />
+                    <div className="space-y-1 flex-grow">
+                      <p className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">check_circle</span> Foto Sampul Tersedia
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCampForm({ ...campForm, cover_photo_url: '' })}
+                        className="text-[11px] text-red-600 font-bold hover:underline"
+                      >
+                        Ganti / Hapus Foto Sampul
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverUpload}
+                      disabled={uploadingCover}
+                      className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    />
+                    {uploadingCover && <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>}
+                  </div>
+                )}
+                <p className="text-[11px] text-outline">
+                  Foto ini akan tampil sebagai gambar utama di kartu katalog depan beranda pengunjung.
+                </p>
+              </div>
+
               {/* Video Sampul (YouTube Link) */}
               <div className="space-y-2 border border-[#EAEAEA] py-3 px-3 my-2 bg-neutral-50 rounded-lg">
                 <div className="flex items-center justify-between">
@@ -736,18 +919,18 @@ export default function AdminCampsPage() {
 
               {/* Gallery Photos Upload */}
               <div className="space-y-2">
-                <label className="text-label-sm font-semibold block">Galeri Foto Camp Lainnya</label>
-                <div className="flex flex-wrap gap-2 mb-2">
+                <label className="text-label-sm font-semibold block">Galeri Foto Camp Lainnya (Format 9:16 Portrait Diterima)</label>
+                <div className="flex flex-wrap gap-2.5 mb-2">
                   {(campForm.gallery_photo_urls || []).map((url, idx) => (
-                    <div key={idx} className="relative border border-border-subtle rounded p-1">
-                      <img src={url} alt={`Gallery ${idx}`} className="h-14 w-14 rounded object-cover" />
+                    <div key={idx} className="relative border border-border-subtle rounded-lg p-1 bg-neutral-900 shadow-sm">
+                      <img src={url} alt={`Gallery ${idx}`} className="h-20 w-14 rounded object-cover" />
                       <button
                         type="button"
                         onClick={() => {
                           const updated = campForm.gallery_photo_urls.filter((_, i) => i !== idx);
                           setCampForm({ ...campForm, gallery_photo_urls: updated });
                         }}
-                        className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-800 text-white rounded-full p-0.5 shadow-sm flex items-center justify-center animate-fade-in"
+                        className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-800 text-white rounded-full p-0.5 shadow-md flex items-center justify-center animate-fade-in"
                         title="Hapus"
                       >
                         <span className="material-symbols-outlined text-[10px]">close</span>
@@ -762,7 +945,7 @@ export default function AdminCampsPage() {
                     accept="image/*"
                     onChange={handleGalleryUpload}
                     disabled={uploadingGallery}
-                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
                   />
                   {uploadingGallery && <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>}
                 </div>
@@ -850,18 +1033,18 @@ export default function AdminCampsPage() {
 
               {/* Room Photos Upload */}
               <div className="space-y-2">
-                <label className="text-label-sm font-semibold block">Foto Kamar (Bisa Banyak)</label>
-                <div className="flex flex-wrap gap-2 mb-2">
+                <label className="text-label-sm font-semibold block">Foto Kamar (Format 9:16 Portrait Diterima)</label>
+                <div className="flex flex-wrap gap-2.5 mb-2">
                   {(roomForm.room_photo_urls || []).map((url, idx) => (
-                    <div key={idx} className="relative border border-border-subtle rounded p-1">
-                      <img src={url} alt={`Room ${idx}`} className="h-14 w-14 rounded object-cover" />
+                    <div key={idx} className="relative border border-border-subtle rounded-lg p-1 bg-neutral-900 shadow-sm">
+                      <img src={url} alt={`Room ${idx}`} className="h-20 w-14 rounded object-cover" />
                       <button
                         type="button"
                         onClick={() => {
                           const updated = roomForm.room_photo_urls.filter((_, i) => i !== idx);
                           setRoomForm({ ...roomForm, room_photo_urls: updated });
                         }}
-                        className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-800 text-white rounded-full p-0.5 shadow-sm flex items-center justify-center animate-fade-in"
+                        className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-800 text-white rounded-full p-0.5 shadow-md flex items-center justify-center animate-fade-in"
                         title="Hapus"
                       >
                         <span className="material-symbols-outlined text-[10px]">close</span>
@@ -876,7 +1059,7 @@ export default function AdminCampsPage() {
                     accept="image/*"
                     onChange={handleRoomPhotosUpload}
                     disabled={uploadingRoom}
-                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
                   />
                   {uploadingRoom && <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>}
                 </div>

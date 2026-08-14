@@ -165,6 +165,8 @@ create table system_settings (
   bank_name text,
   bank_account_number text,
   bank_account_holder text,
+  is_qris_active boolean not null default true,
+  is_bank_active boolean not null default true,
   updated_at timestamptz not null default now()
 );
 

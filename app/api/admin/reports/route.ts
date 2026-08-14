@@ -7,11 +7,11 @@ export async function GET(request: NextRequest) {
   const from = searchParams.get('from') || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Default H-30
   const to = searchParams.get('to') || new Date().toISOString().split('T')[0]; // Default today
 
-  // Query 1: Total Revenue (Confirmed bookings)
+  // Query 1: Total Revenue (Confirmed & Completed bookings)
   const { data: revenueData, error: revenueError } = await supabaseAdmin
     .from('bookings')
     .select('claimed_amount, total_price, status')
-    .eq('status', 'confirmed')
+    .in('status', ['confirmed', 'completed'])
     .gte('created_at', `${from}T00:00:00`)
     .lte('created_at', `${to}T23:59:59`);
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       acc[b.status] = (acc[b.status] || 0) + 1;
       return acc;
     },
-    { hold: 0, pending_verification: 0, confirmed: 0, rejected: 0, expired: 0, cancelled: 0 }
+    { hold: 0, pending_verification: 0, confirmed: 0, completed: 0, rejected: 0, expired: 0, cancelled: 0 }
   );
 
   // Query 3: Occupancy breakdown by camp
@@ -57,11 +57,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: campsError.message }, { status: 500 });
   }
 
-  // Fetch all confirmed bookings that overlap the period to calculate occupancy
+  // Fetch all confirmed & completed bookings that overlap the period to calculate occupancy
   const { data: confirmedBookings, error: bookingsError } = await supabaseAdmin
     .from('bookings')
     .select('room_id, check_in, check_out')
-    .eq('status', 'confirmed');
+    .in('status', ['confirmed', 'completed']);
 
   if (bookingsError) {
     return NextResponse.json({ error: bookingsError.message }, { status: 500 });

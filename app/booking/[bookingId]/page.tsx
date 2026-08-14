@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase/client';
 import { formatRupiah, getTodayStr, calculateCheckoutDate, formatDateRange, validateWhatsApp, normalizeWhatsApp } from '@/lib/utils/helpers';
 
 interface PricingPackage {
@@ -46,6 +47,12 @@ function BookingFormContent() {
   const [notes, setNotes] = useState<string>('');
   const [paymentType, setPaymentType] = useState<'dp' | 'full'>('full');
   const [paymentChannel, setPaymentChannel] = useState<'qris' | 'transfer_bank'>('qris');
+
+  // Payment method visibility settings
+  const [settings, setSettings] = useState<{ is_qris_active: boolean; is_bank_active: boolean }>({
+    is_qris_active: true,
+    is_bank_active: true,
+  });
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -102,6 +109,24 @@ function BookingFormContent() {
 
         // Pre-select check-in
         setCheckInDate(initialCheckIn || getTodayStr());
+
+        // Fetch system settings for active payment method visibility
+        const { data: sData } = await supabase
+          .from('system_settings')
+          .select('is_qris_active, is_bank_active')
+          .single();
+
+        if (sData) {
+          const isQris = (sData as any).is_qris_active ?? true;
+          const isBank = (sData as any).is_bank_active ?? true;
+          setSettings({ is_qris_active: isQris, is_bank_active: isBank });
+
+          if (!isQris && isBank) {
+            setPaymentChannel('transfer_bank');
+          } else if (isQris && !isBank) {
+            setPaymentChannel('qris');
+          }
+        }
 
       } catch (err) {
         console.error('Error fetching booking data:', err);
@@ -300,29 +325,33 @@ function BookingFormContent() {
 
                 <div className="space-y-1">
                   <label className="text-label-md text-on-surface-variant font-semibold">Channel Pembayaran</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentChannel('qris')}
-                      className={`p-3 rounded-lg border text-sm font-bold text-center flex flex-col items-center justify-center gap-1 transition-all ${paymentChannel === 'qris'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-outline-variant bg-white text-on-surface-variant hover:bg-background-warm'
-                        }`}
-                    >
-                      <span className="material-symbols-outlined">qr_code_2</span>
-                      QRIS Statis
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentChannel('transfer_bank')}
-                      className={`p-3 rounded-lg border text-sm font-bold text-center flex flex-col items-center justify-center gap-1 transition-all ${paymentChannel === 'transfer_bank'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-outline-variant bg-white text-on-surface-variant hover:bg-background-warm'
-                        }`}
-                    >
-                      <span className="material-symbols-outlined">account_balance</span>
-                      Transfer Bank Manual
-                    </button>
+                  <div className={`grid gap-4 ${settings.is_qris_active && settings.is_bank_active ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {settings.is_qris_active && (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentChannel('qris')}
+                        className={`p-3 rounded-lg border text-sm font-bold text-center flex flex-col items-center justify-center gap-1 transition-all ${paymentChannel === 'qris'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-outline-variant bg-white text-on-surface-variant hover:bg-background-warm'
+                          }`}
+                      >
+                        <span className="material-symbols-outlined">qr_code_2</span>
+                        QRIS Statis
+                      </button>
+                    )}
+                    {settings.is_bank_active && (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentChannel('transfer_bank')}
+                        className={`p-3 rounded-lg border text-sm font-bold text-center flex flex-col items-center justify-center gap-1 transition-all ${paymentChannel === 'transfer_bank'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-outline-variant bg-white text-on-surface-variant hover:bg-background-warm'
+                          }`}
+                      >
+                        <span className="material-symbols-outlined">account_balance</span>
+                        Transfer Bank Manual
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -10,7 +10,7 @@ export async function GET() {
     .from('camps')
     .select(`
       *,
-      rooms!inner (
+      rooms (
         id,
         pricing_packages (price)
       )
@@ -40,6 +40,7 @@ export async function GET() {
       facilities: camp.facilities,
       cover_photo_url: camp.cover_photo_url,
       youtube_video_url: camp.youtube_video_url,
+      gallery_photo_urls: camp.gallery_photo_urls || [],
       room_count: rooms.length,
       min_price: minPrice,
     };

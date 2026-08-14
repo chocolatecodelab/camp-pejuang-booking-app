@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { roomSchema } from '@/lib/validation';
 
-/** GET /api/admin/camps/[campId]/rooms — list rooms in a camp */
+/** GET /api/admin/camps/[campId]/rooms — list all rooms in a camp */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ campId: string }> }
@@ -77,7 +77,7 @@ export async function PATCH(
   return NextResponse.json({ room: data });
 }
 
-/** DELETE /api/admin/camps/[campId]/rooms — soft delete (set is_active = false) */
+/** DELETE /api/admin/camps/[campId]/rooms — delete room (hard delete with soft delete fallback) */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ campId: string }> }
@@ -89,13 +89,22 @@ export async function DELETE(
     return NextResponse.json({ error: 'Room ID wajib diisi' }, { status: 400 });
   }
 
+  // 1. Try physical hard delete
   const { error } = await supabaseAdmin
     .from('rooms')
-    .update({ is_active: false })
+    .delete()
     .eq('id', id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // 2. If hard delete fails (e.g. FK constraint), fallback to soft delete
+    const { error: softError } = await supabaseAdmin
+      .from('rooms')
+      .update({ is_active: false })
+      .eq('id', id);
+
+    if (softError) {
+      return NextResponse.json({ error: softError.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: true });

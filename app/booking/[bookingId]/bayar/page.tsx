@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
-import { formatRupiah, formatTimeRemaining, getStatusLabel } from '@/lib/utils/helpers';
+import { formatRupiah, formatTimeRemaining, getStatusLabel, compressImage } from '@/lib/utils/helpers';
 import Swal from 'sweetalert2';
 
 interface Booking {
@@ -28,6 +28,8 @@ interface SystemSettings {
   bank_name: string | null;
   bank_account_number: string | null;
   bank_account_holder: string | null;
+  is_qris_active?: boolean;
+  is_bank_active?: boolean;
   admin_whatsapp: string;
 }
 
@@ -169,8 +171,9 @@ export default function PaymentInstructionsPage() {
     setErrorMsg('');
 
     try {
+      const compressedFile = await compressImage(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFile);
 
       const res = await fetch(`/api/bookings/${bookingId}/upload-proof`, {
         method: 'POST',

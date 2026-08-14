@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!email.trim() || !password.trim()) {
       setError('Email dan Password wajib diisi.');
       return;
@@ -57,17 +57,16 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-between font-sans text-neutral-800">
-      
+
       {/* 1. TOP HEADER BAR */}
       <header className="w-full bg-[#FAFAFA] px-6 sm:px-12 h-16 flex items-center justify-between border-b border-neutral-200 select-none shrink-0">
         <Link href="/" className="flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-primary font-bold">apartment</span>
-          <span className="font-headline-sm text-[#b52330] font-bold text-sm tracking-tight select-none">
-            Camp Pejuang
-          </span>
+          <div className="flex items-center gap-2">
+            <img src="/logo-camp-pejuang.png" alt="Camp Pejuang Logo" className="h-10 w-auto object-contain" />
+          </div>
         </Link>
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => alert('Butuh bantuan? Silakan hubungi tim IT Camp Pejuang untuk panduan operasional.')}
           className="p-2 rounded-full hover:bg-neutral-200 text-neutral-500 transition-colors flex items-center justify-center"
           title="Bantuan"
@@ -79,7 +78,7 @@ export default function AdminLoginPage() {
       {/* 2. MAIN LOGIN CONTAINER */}
       <main className="flex-grow flex flex-col justify-center items-center px-4 py-8 shrink-0">
         <div className="w-full max-w-[420px] bg-white border border-[#EAEAEA] rounded-2xl p-8 shadow-sm space-y-6 text-neutral-800 transition-transform duration-300 hover:shadow-md">
-          
+
           {/* Dashboard Icon */}
           <div className="text-center space-y-4 select-none">
             <div className="w-12 h-12 bg-[#b52330] text-white rounded-lg flex items-center justify-center mx-auto shadow-sm">
@@ -189,10 +188,10 @@ export default function AdminLoginPage() {
           <div className="border-t border-neutral-100 pt-4 text-center select-none">
             <p className="text-[11px] text-neutral-500">
               Ada kendala masuk ke akun?{' '}
-              <a 
-                href="https://wa.me/6281234567890" 
-                target="_blank" 
-                rel="noreferrer" 
+              <a
+                href="https://wa.me/6283159236448"
+                target="_blank"
+                rel="noreferrer"
                 className="text-[#b52330] font-bold hover:underline"
               >
                 Hubungi Admin Sistem

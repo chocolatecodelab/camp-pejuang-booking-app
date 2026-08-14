@@ -89,6 +89,8 @@ export const settingsSchema = z.object({
   bank_name: z.string().max(100).optional().nullable(),
   bank_account_number: z.string().max(30).optional().nullable(),
   bank_account_holder: z.string().max(100).optional().nullable(),
+  is_qris_active: z.boolean().optional(),
+  is_bank_active: z.boolean().optional(),
 });
 
 // Type exports for convenience

@@ -15,6 +15,10 @@ export default function AdminSettingsPage() {
   const [bankNumber, setBankNumber] = useState('');
   const [bankHolder, setBankHolder] = useState('');
 
+  // Payment method toggle states
+  const [isQrisActive, setIsQrisActive] = useState<boolean>(true);
+  const [isBankActive, setIsBankActive] = useState<boolean>(true);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -43,6 +47,8 @@ export default function AdminSettingsPage() {
       setBankName(settingsData.bank_name || '');
       setBankNumber(settingsData.bank_account_number || '');
       setBankHolder(settingsData.bank_account_holder || '');
+      setIsQrisActive(settingsData.is_qris_active ?? true);
+      setIsBankActive(settingsData.is_bank_active ?? true);
     } catch (err) {
       console.error(err);
       setError('Terjadi kesalahan koneksi.');
@@ -69,6 +75,11 @@ export default function AdminSettingsPage() {
     const cleanWA = whatsapp.trim().replace(/[^0-9]/g, '');
     if (!cleanWA) {
       setError('Nomor WhatsApp Admin tidak boleh kosong.');
+      return;
+    }
+
+    if (!isQrisActive && !isBankActive) {
+      setError('Minimal 1 metode pembayaran (QRIS atau Transfer Bank) harus diaktifkan untuk penyewa.');
       return;
     }
 
@@ -117,6 +128,8 @@ export default function AdminSettingsPage() {
           bank_name: bankName.trim(),
           bank_account_number: bankNumber.trim(),
           bank_account_holder: bankHolder.trim(),
+          is_qris_active: isQrisActive,
+          is_bank_active: isBankActive,
           updated_at: new Date().toISOString()
         } as any)
         .eq('id', 1);
@@ -202,6 +215,60 @@ export default function AdminSettingsPage() {
             <p className="text-[10px] text-neutral-500 leading-relaxed">
               Nomor ini digunakan untuk tombol kirim bukti ke WhatsApp pasca booking serta notifikasi perpanjangan.
             </p>
+          </div>
+
+          {/* Payment Method Visibility Toggles */}
+          <div className="space-y-3 border-t border-[#EAEAEA] pt-4 text-sm">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-[#b52330]">Visibilitas Metode Pembayaran</h4>
+              <span className="text-[10px] text-neutral-500">Kontrol pilihan di formulir booking penyewa</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* QRIS Toggle Card */}
+              <label className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between select-none ${
+                isQrisActive
+                  ? 'border-emerald-300 bg-emerald-50/50 text-emerald-950'
+                  : 'border-neutral-200 bg-neutral-50 text-neutral-400'
+              }`}>
+                <div className="flex items-center gap-2.5">
+                  <span className={`material-symbols-outlined text-xl ${isQrisActive ? 'text-emerald-600' : 'text-neutral-400'}`}>qr_code_2</span>
+                  <div>
+                    <p className="text-xs font-bold">QRIS Statis</p>
+                    <p className="text-[10px] opacity-75">{isQrisActive ? 'Tampil bagi penyewa' : 'Disembunyikan'}</p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isQrisActive}
+                  onChange={(e) => setIsQrisActive(e.target.checked)}
+                  className="w-4 h-4 accent-[#b52330] rounded cursor-pointer"
+                  disabled={saving}
+                />
+              </label>
+
+              {/* Bank Transfer Toggle Card */}
+              <label className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between select-none ${
+                isBankActive
+                  ? 'border-emerald-300 bg-emerald-50/50 text-emerald-950'
+                  : 'border-neutral-200 bg-neutral-50 text-neutral-400'
+              }`}>
+                <div className="flex items-center gap-2.5">
+                  <span className={`material-symbols-outlined text-xl ${isBankActive ? 'text-emerald-600' : 'text-neutral-400'}`}>account_balance</span>
+                  <div>
+                    <p className="text-xs font-bold">Transfer Bank</p>
+                    <p className="text-[10px] opacity-75">{isBankActive ? 'Tampil bagi penyewa' : 'Disembunyikan'}</p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isBankActive}
+                  onChange={(e) => setIsBankActive(e.target.checked)}
+                  className="w-4 h-4 accent-[#b52330] rounded cursor-pointer"
+                  disabled={saving}
+                />
+              </label>
+            </div>
           </div>
 
           {/* Bank Transfer Details */}

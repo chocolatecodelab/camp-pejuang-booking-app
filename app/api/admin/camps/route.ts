@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { campSchema } from '@/lib/validation';
 
-/** GET /api/admin/camps — list all camps */
+/** GET /api/admin/camps — list all camps (active & inactive) */
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('camps')
@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ camp: data });
 }
 
-/** DELETE /api/admin/camps — soft delete (set is_active=false) */
+/** DELETE /api/admin/camps — delete camp (hard delete with soft delete fallback) */
 export async function DELETE(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const { id } = body;
@@ -85,13 +85,22 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Camp ID wajib diisi' }, { status: 400 });
   }
 
+  // 1. Try physical hard delete
   const { error } = await supabaseAdmin
     .from('camps')
-    .update({ is_active: false })
+    .delete()
     .eq('id', id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // 2. If hard delete fails (e.g. FK constraint), fallback to soft delete
+    const { error: softError } = await supabaseAdmin
+      .from('camps')
+      .update({ is_active: false })
+      .eq('id', id);
+
+    if (softError) {
+      return NextResponse.json({ error: softError.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: true });

@@ -10,6 +10,7 @@ interface DashboardStats {
     hold: number;
     pending_verification: number;
     confirmed: number;
+    completed: number;
     rejected: number;
     expired: number;
     cancelled: number;
