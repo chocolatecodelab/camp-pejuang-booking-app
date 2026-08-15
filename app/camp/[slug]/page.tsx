@@ -289,12 +289,23 @@ export default function CampDetailPage() {
                 </span>
               </div>
             ) : (
-              <div className="relative aspect-[1/1] w-full rounded-2xl overflow-hidden shadow-sm border border-border-subtle bg-surface-container-high">
-                <img
-                  src={camp.cover_photo_url || "https://images.unsplash.com/photo-1596276122653-651a3898309f?auto=format&fit=crop&q=80&w=800"}
-                  alt={camp.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="relative aspect-[1/1] w-full rounded-2xl overflow-hidden shadow-sm border border-border-subtle bg-slate-100">
+                {camp.cover_photo_url ? (
+                  <img
+                    src={camp.cover_photo_url}
+                    alt={camp.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col items-center justify-center p-6 select-none">
+                    <img
+                      src="/logo-camp-pejuang.png"
+                      alt="Logo Camp Pejuang"
+                      className="h-24 sm:h-28 w-auto object-contain drop-shadow-sm opacity-90 transition-transform duration-300 hover:scale-105"
+                    />
+                    <span className="text-[11px] font-bold text-outline tracking-widest uppercase mt-3">Camp Pejuang</span>
+                  </div>
+                )}
                 <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold shadow ${getCampTypeColor(camp.type)}`}>
                   {getCampTypeLabel(camp.type).toUpperCase()}
                 </span>
@@ -472,6 +483,36 @@ export default function CampDetailPage() {
               </div>
             </div>
           ))}
+        </section>
+
+        {/* Call to Action: Masih Ragu / Tanya Admin */}
+        <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-surface-cream rounded-2xl border border-primary/20 p-8 sm:p-10 shadow-sm relative overflow-hidden my-8">
+          <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-2 text-center md:text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/15 text-primary rounded-full text-xs font-bold">
+                <span className="material-symbols-outlined text-sm font-bold">help</span>
+                Bantuan & Layanan Tanya Jawab
+              </div>
+              <h3 className="text-headline-md font-bold text-on-surface">Masih Ragu atau Punya Pertanyaan Seputar Camp?</h3>
+              <p className="text-body-md text-on-surface-variant max-w-xl">
+                Jangan ragu untuk konsultasi langsung dengan pengelola {camp.name}. Kami siap membantu memberikan informasi fasilitas, ketersediaan kamar, hingga lingkungan Kampung Inggris.
+              </p>
+            </div>
+
+            <a
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_OWNER_WHATSAPP || '6281234567890'}?text=${encodeURIComponent(
+                `Halo Admin Camp Pejuang, saya ingin bertanya lebih lanjut mengenai ${camp.name}...`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 shrink-0 hover:-translate-y-0.5"
+            >
+              <span className="material-symbols-outlined text-xl">chat</span>
+              Tanya Admin via WhatsApp
+            </a>
+          </div>
         </section>
       </main>
 

@@ -113,7 +113,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end p-6">
                   <div className="text-white">
                     <p className="text-label-sm uppercase tracking-widest text-primary-container">Unggulan</p>
-                    <p className="text-headline-sm">Camp Pejuang Putra 1</p>
+                    {/* <p className="text-headline-sm">Camp Pejuang Putra 1</p> */}
                   </div>
                 </div>
               </div>
@@ -212,12 +212,23 @@ export default function Home() {
                 {filteredCamps.map((camp) => (
                   <div key={camp.id} className="card-level-1 flex flex-col h-full">
                     {/* Camp Image */}
-                    <div className="relative h-56 sm:h-84 w-full overflow-hidden rounded-t-xl bg-surface-container-high">
-                      <img
-                        src={camp.cover_photo_url || "https://images.unsplash.com/photo-1596276122653-651a3898309f?auto=format&fit=crop&q=80&w=600"}
-                        alt={camp.name}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-xl bg-slate-100">
+                      {camp.cover_photo_url ? (
+                        <img
+                          src={camp.cover_photo_url}
+                          alt={camp.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col items-center justify-center p-6 select-none">
+                          <img
+                            src="/logo-camp-pejuang.png"
+                            alt="Logo Camp Pejuang"
+                            className="h-20 sm:h-24 w-auto object-contain drop-shadow-sm opacity-90 transition-transform duration-300 hover:scale-105"
+                          />
+                          <span className="text-[10px] font-bold text-outline tracking-widest uppercase mt-3">Camp Pejuang</span>
+                        </div>
+                      )}
                       <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold ${getCampTypeColor(camp.type)}`}>
                         Camp {getCampTypeLabel(camp.type)}
                       </span>
