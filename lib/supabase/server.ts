@@ -1,6 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+if (typeof globalThis.WebSocket === 'undefined') {
+  (globalThis as any).WebSocket = class WebSocket {
+    static CONNECTING = 0;
+    static OPEN = 1;
+    static CLOSING = 2;
+    static CLOSED = 3;
+  };
+}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -21,5 +30,8 @@ export const supabaseAdmin = createClient<Database>(url, serviceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
+  },
+  realtime: {
+    transport: null as any,
   },
 });

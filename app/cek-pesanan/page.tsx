@@ -409,11 +409,21 @@ function TrackBookingContent() {
                     <span>Nominal Ditransfer</span>
                     <span>{formatRupiah(booking.claimed_amount)}</span>
                   </div>
-                  {booking.payment_type === 'dp' && booking.status === 'confirmed' && (
-                    <div className="flex justify-between text-xs text-success-green font-semibold">
-                      <span>Sisa Pelunasan di Camp </span>
-                      <span> {formatRupiah(booking.total_price - booking.claimed_amount)}</span>
-                    </div>
+                  {booking.status === 'confirmed' && (
+                    booking.claimed_amount < booking.total_price ? (
+                      <div className="flex justify-between text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200 font-semibold">
+                        <span>Sisa Pelunasan di Camp</span>
+                        <span>{formatRupiah(booking.total_price - booking.claimed_amount)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 font-semibold">
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                          <span className="material-symbols-outlined text-base text-emerald-600">verified</span>
+                          Status Pembayaran
+                        </span>
+                        <span className="text-emerald-700 font-extrabold bg-emerald-100 px-2 py-0.5 rounded">LUNAS (100%)</span>
+                      </div>
+                    )
                   )}
                 </div>
               </div>

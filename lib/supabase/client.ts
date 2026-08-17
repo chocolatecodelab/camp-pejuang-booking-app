@@ -13,5 +13,10 @@ if (typeof window !== 'undefined' && (!url || url.includes('placeholder'))) {
 
 export const supabase = createClient<Database>(
   url || 'https://placeholder.supabase.co',
-  key || 'placeholder'
+  key || 'placeholder',
+  {
+    realtime: {
+      transport: null as any,
+    },
+  }
 );

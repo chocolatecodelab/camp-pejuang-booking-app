@@ -131,3 +131,15 @@ export function waBookingCompleted(phone: string, bookingCode: string, customerN
 
   return waLink(phone, message);
 }
+
+/** Admin records remaining balance settlement */
+export function waSettleBalance(phone: string, bookingCode: string, customerName: string, settledAmount: number): string {
+  const message =
+    `💰 *Pelunasan Pembayaran Sewa Diterima!*\n\n` +
+    `Halo ${customerName},\n` +
+    `Sisa pelunasan sebesar *${formatRupiah(settledAmount)}* untuk booking *${bookingCode}* di Camp Pejuang telah diterima di lokasi oleh admin.\n\n` +
+    `Status pembayaran sewa Anda kini *LUNAS (100%)*! ✨\n\n` +
+    `Terima kasih! Selamat menempuh masa sewa di Camp Pejuang! 🙏`;
+
+  return waLink(phone, message);
+}

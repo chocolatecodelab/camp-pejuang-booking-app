@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { formatRupiah, formatDateRange, getStatusLabel, getStatusColor } from '@/lib/utils/helpers';
-import { waConfirmPayment, waRejectPayment, waBookingCompleted } from '@/lib/whatsapp';
+import { waConfirmPayment, waRejectPayment, waBookingCompleted, waSettleBalance } from '@/lib/whatsapp';
 import Swal from 'sweetalert2';
 
 interface Booking {
@@ -334,6 +334,64 @@ export default function AdminTransactionsPage() {
     }
   };
 
+  const handleSettleBalance = async (targetBooking?: Booking) => {
+    const b = targetBooking || selectedBooking;
+    if (!b) return;
+
+    const remaining = b.total_price - b.claimed_amount;
+    if (remaining <= 0) return;
+
+    const result = await Swal.fire({
+      title: 'Catat Pelunasan Sisa di Tempat?',
+      html: `<div class="text-left text-sm space-y-2 mt-2">` +
+            `<p>Konfirmasi bahwa sisa pembayaran sebesar <strong>${formatRupiah(remaining)}</strong> dari penyewa <strong>${b.customer_name}</strong> telah diterima di lokasi?</p>` +
+            `<p class="text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded border border-emerald-200">ℹ️ Nominal terbayar (claimed amount) akan diperbarui menjadi 100% LUNAS (<strong>${formatRupiah(b.total_price)}</strong>) dan tercatat di laporan keuangan.</p>` +
+            `</div>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, Catat Pelunasan!',
+      cancelButtonText: 'Batal',
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/bookings/${b.id}/settle`, {
+        method: 'PATCH',
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal mencatat pelunasan sisa');
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Pelunasan Berhasil Dicatat!',
+        text: `Status pembayaran sewa ${b.customer_name} kini 100% LUNAS (${formatRupiah(b.total_price)}).`,
+        confirmButtonColor: '#059669',
+      });
+
+      // Open WhatsApp notification
+      const waLink = waSettleBalance(b.whatsapp_number, b.booking_code, b.customer_name, remaining);
+      window.open(waLink, '_blank');
+
+      if (selectedBooking?.id === b.id) {
+        setSelectedBooking(null);
+      }
+      fetchBookings();
+    } catch (err: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Terjadi kesalahan sistem',
+        confirmButtonColor: '#b52330',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -430,6 +488,11 @@ export default function AdminTransactionsPage() {
                     <td className="p-4">
                       <p className="font-bold text-on-surface">{formatRupiah(b.claimed_amount)}</p>
                       <p className="text-[10px] text-outline uppercase font-semibold">{b.payment_type} pay</p>
+                      {b.status === 'confirmed' && b.claimed_amount < b.total_price && (
+                        <span className="inline-block mt-0.5 px-1.5 py-0.2 bg-amber-100 text-amber-900 text-[9px] font-bold rounded">
+                          Sisa {formatRupiah(b.total_price - b.claimed_amount)}
+                        </span>
+                      )}
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(b.status)}`}>
@@ -444,6 +507,16 @@ export default function AdminTransactionsPage() {
                         >
                           Detail & Verifikasi
                         </button>
+                        {b.status === 'confirmed' && b.claimed_amount < b.total_price && (
+                          <button
+                            onClick={() => handleSettleBalance(b)}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded transition-colors inline-flex items-center gap-1 shadow-sm"
+                            title="Catat penerimaan sisa pelunasan di lokasi"
+                          >
+                            <span className="material-symbols-outlined text-xs">price_check</span>
+                            Pelunasan Sisa
+                          </button>
+                        )}
                         {b.status === 'confirmed' && (
                           <button
                             onClick={() => handleCheckout(b)}
@@ -603,13 +676,24 @@ export default function AdminTransactionsPage() {
               </button>
 
               {selectedBooking.status === 'confirmed' && (
-                <button
-                  onClick={() => handleCheckout()}
-                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded transition-colors flex items-center gap-1 shadow-sm"
-                >
-                  <span className="material-symbols-outlined text-sm">logout</span>
-                  Selesai Sewa / Check-Out (Kamar Kosong)
-                </button>
+                <div className="flex items-center gap-2">
+                  {selectedBooking.claimed_amount < selectedBooking.total_price && (
+                    <button
+                      onClick={() => handleSettleBalance()}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded transition-colors flex items-center gap-1 shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-sm">price_check</span>
+                      Catat Pelunasan Sisa ({formatRupiah(selectedBooking.total_price - selectedBooking.claimed_amount)})
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleCheckout()}
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded transition-colors flex items-center gap-1 shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-sm">logout</span>
+                    Selesai Sewa / Check-Out
+                  </button>
+                </div>
               )}
 
               {selectedBooking.status === 'pending_verification' && (
