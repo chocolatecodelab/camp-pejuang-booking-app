@@ -333,10 +333,22 @@ function TrackBookingContent() {
                   </div>
                 )}
 
-                {booking.status === 'rejected' && booking.rejected_reason && (
-                  <div className="p-4 bg-red-50 rounded-lg border border-red-200 text-sm space-y-1">
-                    <p className="font-bold text-red-900">Alasan Penolakan Admin:</p>
-                    <p className="text-red-800 italic leading-relaxed">"{booking.rejected_reason}"</p>
+                {booking.status === 'rejected' && (
+                  <div className="p-4 bg-red-50 rounded-lg border border-red-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                    <div className="space-y-1 text-center sm:text-left text-sm">
+                      <p className="font-bold text-red-900">Bukti Transfer Ditolak Admin</p>
+                      {booking.rejected_reason && (
+                        <p className="text-red-800 text-xs italic">Alasan: "{booking.rejected_reason}"</p>
+                      )}
+                      <p className="text-red-700 text-xs">Silakan upload ulang bukti transfer yang valid agar sewa dapat diproses.</p>
+                    </div>
+                    <Link
+                      href={`/booking/${booking.booking_id}/bayar`}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold shadow transition-colors flex items-center gap-1 shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-sm">upload_file</span>
+                      Upload Ulang Bukti
+                    </Link>
                   </div>
                 )}
 

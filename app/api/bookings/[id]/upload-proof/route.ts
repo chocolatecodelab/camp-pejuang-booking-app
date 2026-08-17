@@ -20,7 +20,7 @@ export async function POST(
     return NextResponse.json({ error: 'Booking tidak ditemukan' }, { status: 404 });
   }
 
-  if (booking.status !== 'hold' && booking.status !== 'pending_verification') {
+  if (booking.status !== 'hold' && booking.status !== 'pending_verification' && booking.status !== 'rejected') {
     return NextResponse.json(
       { error: `Tidak bisa upload bukti untuk booking dengan status ${booking.status}` },
       { status: 400 }
@@ -35,14 +35,15 @@ export async function POST(
     return NextResponse.json({ error: 'File bukti pembayaran wajib diupload' }, { status: 400 });
   }
 
-  // Validate file
+  // Validate file size (5MB)
   if (file.size > 5 * 1024 * 1024) {
     return NextResponse.json({ error: 'Ukuran file maksimal 5MB' }, { status: 400 });
   }
 
-  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-  if (!allowedTypes.includes(file.type)) {
-    return NextResponse.json({ error: 'Format file harus JPG, PNG, atau PDF' }, { status: 400 });
+  // Validate file type (allow all image formats including WEBP/JPG/PNG/HEIC and PDF)
+  const isImageOrPdf = file.type.startsWith('image/') || file.type === 'application/pdf';
+  if (!isImageOrPdf) {
+    return NextResponse.json({ error: 'Format file harus berupa Gambar (JPG, PNG, WEBP) atau PDF' }, { status: 400 });
   }
 
   // Upload to storage

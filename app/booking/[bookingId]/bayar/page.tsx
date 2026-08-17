@@ -133,13 +133,13 @@ export default function PaymentInstructionsPage() {
       return;
     }
 
-    // Validate type
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (!allowedTypes.includes(selectedFile.type)) {
+    // Validate type (allow any image type and PDF)
+    const isAllowedType = selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf';
+    if (!isAllowedType) {
       Swal.fire({
         icon: 'error',
         title: 'Format Tidak Didukung',
-        text: 'Format bukti transfer harus JPG, PNG, atau PDF',
+        text: 'Format bukti transfer harus berupa Gambar (JPG, PNG, WEBP) atau PDF',
         confirmButtonColor: '#b52330',
       });
       return;
