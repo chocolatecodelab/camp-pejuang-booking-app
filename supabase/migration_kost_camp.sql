@@ -52,18 +52,24 @@ create table rooms (
   camp_id uuid not null references camps(id) on delete cascade,
   name text not null,                      -- "Kamar 1"
   floor_label text,                        -- "Lantai 1"
+  capacity int not null default 1,         -- Kapasitas bed kamar (1, 2, 3, 4, dll)
+  active_occupancy_limit int,              -- Limit keterisian saat kamar sedang terisi
+  active_occupancy_tier text,             -- Tipe keterisian aktif (sharing_3, sharing_2, private)
   room_photo_urls text[],
   is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
 
 -- ========================
--- 3. PRICING PACKAGES (harga per kombinasi kamar + durasi)
+-- 3. PRICING PACKAGES (harga per kombinasi kamar + durasi + keterisian)
 -- ========================
 create table pricing_packages (
   id uuid primary key default gen_random_uuid(),
   room_id uuid not null references rooms(id) on delete cascade,
   label text not null,                     -- "2 Minggu" | "1 Bulan" | "3 Bulan"
+  occupancy_label text,                    -- "Sharing 3 Orang" | "Sharing 2 Orang" | "Private Sendiri"
+  occupancy_tier int not null default 1,   -- 1 = Private, 2 = Sharing 2, 3 = Sharing 3
+  slots_consumed int not null default 1,   -- Slot bed yang dikonsumsi (1 untuk sharing, capacity untuk private)
   duration_days int not null,              -- 14 | 30 | 90
   price numeric(12,2) not null,
   min_dp_amount numeric(12,2),             -- nominal DP minimum (nullable jika wajib full)
@@ -81,6 +87,7 @@ create table bookings (
   room_id uuid not null references rooms(id),
   pricing_package_id uuid references pricing_packages(id),
   parent_booking_id uuid references bookings(id),
+  slots_reserved int not null default 1,   -- Slot bed yang dipesan (biasanya 1)
 
   customer_name text not null,
   whatsapp_number text not null,

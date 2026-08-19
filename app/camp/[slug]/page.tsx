@@ -8,6 +8,9 @@ import { formatRupiah, getCampTypeLabel, getCampTypeColor, getTodayStr, calculat
 interface PricingPackage {
   id: string;
   label: string;
+  occupancy_label?: string | null;
+  occupancy_tier?: number;
+  slots_consumed?: number;
   duration_days: number;
   price: number;
   min_dp_amount: number | null;
@@ -17,6 +20,9 @@ interface Room {
   id: string;
   name: string;
   floor_label: string;
+  capacity?: number;
+  active_occupancy_limit?: number | null;
+  active_occupancy_tier?: string | null;
   room_photo_urls: string[] | null;
   pricing_packages: PricingPackage[];
 }
@@ -43,23 +49,42 @@ interface BookingLock {
 
 function RoomCard({
   room,
-  booked,
+  occupiedCount,
   checkInDate,
+  durationLabel,
   pkg,
   floor
 }: {
   room: Room;
-  booked: boolean;
+  occupiedCount: number;
   checkInDate: string;
+  durationLabel: string;
   pkg: any;
   floor: string;
 }) {
   const [activePhoto, setActivePhoto] = useState(0);
+  const capacity = room.capacity || 1;
+  const isMultiOccupancy = capacity > 1;
+  const remainingSlots = Math.max(0, capacity - occupiedCount);
+  const booked = remainingSlots === 0;
+
+  // Available packages
+  const availablePkgs = room.pricing_packages && room.pricing_packages.length > 0
+    ? room.pricing_packages
+    : (pkg ? [pkg] : []);
+
+  const [selectedPkg, setSelectedPkg] = useState<PricingPackage | null>(
+    pkg || availablePkgs[0] || null
+  );
+
+  useEffect(() => {
+    if (pkg) setSelectedPkg(pkg);
+  }, [pkg]);
+
   const photos = room.room_photo_urls && room.room_photo_urls.length > 0
     ? room.room_photo_urls
     : ["https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600"];
 
-  // Auto-slide room photos every 4 seconds
   useEffect(() => {
     if (photos.length <= 1) return;
     const timer = setInterval(() => {
@@ -67,6 +92,8 @@ function RoomCard({
     }, 4000);
     return () => clearInterval(timer);
   }, [photos.length]);
+
+  const currentPkg = selectedPkg || pkg;
 
   return (
     <div className="bg-surface-cream rounded-xl border border-border-subtle shadow-sm overflow-hidden flex flex-col h-full transition-all hover:shadow-md">
@@ -77,7 +104,28 @@ function RoomCard({
           className="w-full h-full object-cover transition-all duration-300 hover:scale-105"
         />
 
-        {/* Navigation arrows for card */}
+        {/* Capacity badge */}
+        <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold bg-black/70 text-white shadow-sm backdrop-blur-sm flex items-center gap-1">
+          <span className="material-symbols-outlined text-xs">bed</span>
+          {capacity > 1 ? `Kapasitas ${capacity} Bed` : 'Single Room'}
+        </span>
+
+        {/* Status badge: Exact Occupancy Count */}
+        <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-label-sm font-bold shadow-sm ${
+          booked
+            ? 'bg-red-600 text-white shadow'
+            : occupiedCount > 0
+            ? 'bg-amber-500 text-white shadow'
+            : 'bg-emerald-600 text-white shadow'
+        }`}>
+          {booked
+            ? `🔴 Full Booked (${capacity}/${capacity})`
+            : occupiedCount > 0
+            ? `👥 Terisi ${occupiedCount}/${capacity} Bed (Sisa ${remainingSlots})`
+            : `🟢 Kosong (0/${capacity} Terisi)`}
+        </span>
+
+        {/* Photo arrows */}
         {photos.length > 1 && (
           <>
             <button
@@ -92,33 +140,93 @@ function RoomCard({
             >
               <span className="material-symbols-outlined text-sm font-bold">chevron_right</span>
             </button>
-
-            {/* Small index badge */}
             <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-bold rounded">
               {activePhoto + 1}/{photos.length}
             </span>
           </>
         )}
-
-        <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-label-sm font-bold shadow-sm ${booked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-          }`}>
-          {booked ? 'Terisi' : 'Tersedia'}
-        </span>
       </div>
 
       <div className="p-5 flex flex-col flex-grow space-y-4 text-sm">
-        <div className="space-y-1">
-          <h4 className="text-headline-sm font-bold">{room.name}</h4>
-          <p className="text-label-sm text-outline">{floor}</p>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <h4 className="text-headline-sm font-bold">{room.name}</h4>
+            <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">{floor}</span>
+          </div>
+
+          {room.active_occupancy_tier ? (
+            <div className="text-xs text-amber-800 bg-amber-50/90 p-2.5 rounded-lg border border-amber-200 space-y-0.5">
+              <div className="font-bold flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm">lock</span>
+                Kamar Terisi ({occupiedCount}/${capacity} Penghuni): {room.active_occupancy_tier}
+              </div>
+              <p className="text-[11px] text-amber-700 leading-tight">
+                Sisa {remainingSlots} bed kosong otomatis mengikuti tarif {room.active_occupancy_tier}.
+              </p>
+            </div>
+          ) : isMultiOccupancy && (
+            <p className="text-[11px] text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1">
+              <span className="material-symbols-outlined text-xs">tune</span>
+              Kamar kosong (0/{capacity}) — Bebas pilih opsi Sharing atau Private.
+            </p>
+          )}
         </div>
 
-        {pkg && (
-          <div className="pt-2">
-            <p className="text-label-sm text-outline">Harga ({pkg.label})</p>
-            <p className="text-headline-sm font-bold text-primary">{formatRupiah(pkg.price)}</p>
-            {pkg.min_dp_amount && (
-              <p className="text-label-sm text-success-green font-semibold">Bisa DP mulai {formatRupiah(pkg.min_dp_amount)}</p>
-            )}
+        {/* Multi-occupancy Tier & Duration Selection */}
+        {availablePkgs.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-border-subtle">
+            <p className="text-xs font-bold text-neutral-700 uppercase tracking-wider">
+              Pilih Paket Sewa & Keterisian Kamar:
+            </p>
+            <div className="flex flex-col gap-2">
+              {availablePkgs.map((p) => {
+                const isSelected = currentPkg?.id === p.id;
+                
+                // Determine Occupancy Title
+                let titleText = p.occupancy_label && p.occupancy_label.trim() !== '' && p.occupancy_label !== p.label
+                  ? p.occupancy_label
+                  : p.occupancy_tier === 3
+                  ? 'Sharing 3 Orang'
+                  : p.occupancy_tier === 2
+                  ? 'Sharing 2 Orang'
+                  : p.occupancy_tier === 1
+                  ? 'Private 1 Kamar'
+                  : `Paket ${p.label}`;
+
+                const durationLabelText = p.label && p.label !== p.occupancy_label ? p.label : `${p.duration_days} Hari`;
+                const durationText = `Durasi: ${durationLabelText} (${p.duration_days} Hari)`;
+
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedPkg(p)}
+                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between group ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
+                        : 'border-border-subtle bg-white hover:bg-neutral-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected ? 'border-primary bg-primary text-white' : 'border-neutral-300'
+                      }`}>
+                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                      </div>
+                      <div>
+                        <p className="font-bold text-xs text-on-surface">
+                          {titleText}
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-medium">
+                          {durationText} {p.min_dp_amount ? `• Bisa DP ${formatRupiah(p.min_dp_amount)}` : '• Bayar Lunas'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-sm text-primary">{formatRupiah(p.price)}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -128,14 +236,14 @@ function RoomCard({
               disabled
               className="w-full py-2.5 bg-surface-container text-outline rounded-md text-sm font-bold cursor-not-allowed text-center"
             >
-              Kamar Terisi
+              Kamar Full Booked
             </button>
           ) : (
             <Link
-              href={`/booking/${room.id}?check_in=${checkInDate}&package_id=${pkg?.id}`}
-              className="w-full block py-2.5 bg-primary text-white rounded-md text-sm font-bold hover:bg-primary-container text-center transition-colors shadow-sm"
+              href={`/booking/${room.id}?check_in=${checkInDate}&package_id=${currentPkg?.id || ''}`}
+              className="w-full block py-3 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-container text-center transition-all shadow-sm hover:shadow-md"
             >
-              Pilih & Pesan Kamar
+              Pilih & Pesan Bed Ini
             </Link>
           )}
         </div>
@@ -202,30 +310,35 @@ export default function CampDetailPage() {
     return () => clearInterval(timer);
   }, [slidesCount]);
 
-  // Helper to check if a room is locked (booked) on the selected dates
-  const isRoomBooked = (roomId: string): boolean => {
-    if (!checkInDate) return false;
+  // Helper to calculate occupied slots count in a room on the selected dates
+  const getOccupiedCount = (roomId: string): number => {
+    if (!checkInDate) return 0;
     const checkOutDate = calculateCheckoutDate(checkInDate, selectedDurationDays);
 
     const reqStart = new Date(checkInDate).getTime();
     const reqEnd = new Date(checkOutDate).getTime();
 
-    // Check overlap with locks
     const roomLocks = locks.filter((l) => l.room_id === roomId);
+    let count = 0;
     for (const lock of roomLocks) {
-      // Parse Postgres daterange e.g. [2026-07-01,2026-07-15)
       const matches = lock.stay_period.match(/[\[\(]([^,]+),([^\]\)]+)[\]\)]/);
       if (matches) {
         const lockStart = new Date(matches[1]).getTime();
         const lockEnd = new Date(matches[2]).getTime();
-
-        // Overlap condition: (StartA < EndB) and (EndA > StartB)
         if (reqStart < lockEnd && reqEnd > lockStart) {
-          return true;
+          count++;
         }
       }
     }
-    return false;
+    return count;
+  };
+
+  // Helper to check if a room is locked (booked) on the selected dates
+  const isRoomBooked = (roomId: string): boolean => {
+    const room = rooms.find((r) => r.id === roomId);
+    const capacity = room?.capacity || 1;
+    const occupied = getOccupiedCount(roomId);
+    return occupied >= capacity;
   };
 
   if (loading) {
@@ -465,16 +578,17 @@ export default function CampDetailPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {roomsByFloor[floor].map((room) => {
-                  const booked = isRoomBooked(room.id);
-                  const durationLabel = selectedDurationDays === 14 ? '2 Minggu' : selectedDurationDays === 30 ? '1 Bulan' : selectedDurationDays === 60 ? '2 Bulan' : '3 Bulan';
-                  const pkg = room.pricing_packages.find((p) => p.label === durationLabel) || room.pricing_packages[0];
+                  const occupiedCount = getOccupiedCount(room.id);
+                  const durationLabel = selectedDurationDays === 14 ? '2 Minggu (14 Hari)' : selectedDurationDays === 30 ? '1 Bulan (30 Hari)' : selectedDurationDays === 60 ? '2 Bulan (60 Hari)' : '3 Bulan (90 Hari)';
+                  const pkg = room.pricing_packages.find((p) => p.duration_days === selectedDurationDays || p.label.includes(String(selectedDurationDays))) || room.pricing_packages[0];
 
                   return (
                     <RoomCard
                       key={room.id}
                       room={room}
-                      booked={booked}
+                      occupiedCount={occupiedCount}
                       checkInDate={checkInDate}
+                      durationLabel={durationLabel}
                       pkg={pkg}
                       floor={floor}
                     />

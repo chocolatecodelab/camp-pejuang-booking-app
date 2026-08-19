@@ -36,6 +36,9 @@ export type Room = {
   camp_id: string;
   name: string;
   floor_label: string | null;
+  capacity: number;
+  active_occupancy_limit: number | null;
+  active_occupancy_tier: string | null;
   room_photo_urls: string[] | null;
   is_active: boolean;
   created_at: string;
@@ -45,6 +48,9 @@ export type PricingPackage = {
   id: string;
   room_id: string;
   label: string;
+  occupancy_label: string | null;
+  occupancy_tier: number;
+  slots_consumed: number;
   duration_days: number;
   price: number;
   min_dp_amount: number | null;
@@ -59,6 +65,7 @@ export type Booking = {
   room_id: string;
   pricing_package_id: string | null;
   parent_booking_id: string | null;
+  slots_reserved: number;
   customer_name: string;
   whatsapp_number: string;
   notes: string | null;
@@ -138,27 +145,34 @@ export type CampInsert = Omit<Camp, 'id' | 'created_at' | 'is_active' | 'extensi
   created_at?: string;
 };
 
-export type RoomInsert = Omit<Room, 'id' | 'created_at' | 'is_active' | 'floor_label' | 'room_photo_urls'> & {
+export type RoomInsert = Omit<Room, 'id' | 'created_at' | 'is_active' | 'floor_label' | 'capacity' | 'active_occupancy_limit' | 'active_occupancy_tier' | 'room_photo_urls'> & {
   id?: string;
   is_active?: boolean;
   floor_label?: string | null;
+  capacity?: number;
+  active_occupancy_limit?: number | null;
+  active_occupancy_tier?: string | null;
   room_photo_urls?: string[] | null;
   created_at?: string;
 };
 
-export type PricingPackageInsert = Omit<PricingPackage, 'id' | 'created_at' | 'is_active' | 'sort_order' | 'min_dp_amount'> & {
+export type PricingPackageInsert = Omit<PricingPackage, 'id' | 'created_at' | 'is_active' | 'sort_order' | 'min_dp_amount' | 'occupancy_label' | 'occupancy_tier' | 'slots_consumed'> & {
   id?: string;
   is_active?: boolean;
   sort_order?: number;
+  occupancy_label?: string | null;
+  occupancy_tier?: number;
+  slots_consumed?: number;
   min_dp_amount?: number | null;
   created_at?: string;
 };
 
-export type BookingInsert = Omit<Booking, 'id' | 'created_at' | 'updated_at' | 'stay_period' | 'status' | 'hold_expires_at' | 'extension_offer_expires_at' | 'rejected_reason' | 'cancelled_reason' | 'notes' | 'parent_booking_id'> & {
+export type BookingInsert = Omit<Booking, 'id' | 'created_at' | 'updated_at' | 'stay_period' | 'status' | 'hold_expires_at' | 'extension_offer_expires_at' | 'rejected_reason' | 'cancelled_reason' | 'notes' | 'parent_booking_id' | 'slots_reserved'> & {
   id?: string;
   status?: BookingStatus;
   notes?: string | null;
   parent_booking_id?: string | null;
+  slots_reserved?: number;
   hold_expires_at?: string | null;
   extension_offer_expires_at?: string | null;
   rejected_reason?: string | null;

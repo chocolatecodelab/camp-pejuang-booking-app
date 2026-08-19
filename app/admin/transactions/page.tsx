@@ -34,11 +34,11 @@ interface Booking {
 export default function AdminTransactionsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  
+
   // Selected detail modal
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -49,7 +49,7 @@ export default function AdminTransactionsPage() {
   const [campRooms, setCampRooms] = useState<{ id: string; name: string; floor_label: string | null }[]>([]);
   const [selectedNewRoomId, setSelectedNewRoomId] = useState('');
   const [reassignLoading, setReassignLoading] = useState(false);
-  
+
   useEffect(() => {
     fetchBookings();
   }, [statusFilter]);
@@ -142,13 +142,13 @@ export default function AdminTransactionsPage() {
         Swal.fire('Gagal Pindah Kamar', data.error || 'Terjadi kesalahan', 'error');
         return;
       }
-      
+
       Swal.fire('Berhasil!', 'Kamar berhasil dipindahkan.', 'success');
       setIsReassigning(false);
-      
+
       // Refresh the main bookings list
       fetchBookings();
-      
+
       // Update local modal data
       const matchedRoom = campRooms.find(r => r.id === selectedNewRoomId);
       if (matchedRoom) {
@@ -282,9 +282,9 @@ export default function AdminTransactionsPage() {
     const { value: notes, isConfirmed } = await Swal.fire({
       title: 'Selesai Sewa / Check-Out Awal?',
       html: `<div class="text-left text-sm space-y-2 mt-2">` +
-            `<p>Apakah penyewa <strong>${b.customer_name}</strong> telah selesai menyewa dan mengosongkan <strong>${b.rooms?.name} (${b.rooms?.camps?.name})</strong>?</p>` +
-            `<p class="text-xs text-teal-800 bg-teal-50 p-2.5 rounded border border-teal-200">ℹ️ Kamar akan langsung rilis dan status kamar menjadi <strong>Tersedia (Kosong)</strong> untuk pemesan baru.</p>` +
-            `</div>`,
+        `<p>Apakah penyewa <strong>${b.customer_name}</strong> telah selesai menyewa dan mengosongkan <strong>${b.rooms?.name} (${b.rooms?.camps?.name})</strong>?</p>` +
+        `<p class="text-xs text-teal-800 bg-teal-50 p-2.5 rounded border border-teal-200">ℹ️ Kamar akan langsung rilis dan status kamar menjadi <strong>Tersedia (Kosong)</strong> untuk pemesan baru.</p>` +
+        `</div>`,
       input: 'text',
       inputPlaceholder: 'Catatan opsional (misal: keluar H-5 urusan keluarga)',
       icon: 'question',
@@ -344,9 +344,9 @@ export default function AdminTransactionsPage() {
     const result = await Swal.fire({
       title: 'Catat Pelunasan Sisa di Tempat?',
       html: `<div class="text-left text-sm space-y-2 mt-2">` +
-            `<p>Konfirmasi bahwa sisa pembayaran sebesar <strong>${formatRupiah(remaining)}</strong> dari penyewa <strong>${b.customer_name}</strong> telah diterima di lokasi?</p>` +
-            `<p class="text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded border border-emerald-200">ℹ️ Nominal terbayar (claimed amount) akan diperbarui menjadi 100% LUNAS (<strong>${formatRupiah(b.total_price)}</strong>) dan tercatat di laporan keuangan.</p>` +
-            `</div>`,
+        `<p>Konfirmasi bahwa sisa pembayaran sebesar <strong>${formatRupiah(remaining)}</strong> dari penyewa <strong>${b.customer_name}</strong> telah diterima di lokasi?</p>` +
+        `<p class="text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded border border-emerald-200">ℹ️ Nominal terbayar (claimed amount) akan diperbarui menjadi 100% LUNAS (<strong>${formatRupiah(b.total_price)}</strong>) dan tercatat di laporan keuangan.</p>` +
+        `</div>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#059669',
@@ -377,6 +377,80 @@ export default function AdminTransactionsPage() {
       // Open WhatsApp notification
       const waLink = waSettleBalance(b.whatsapp_number, b.booking_code, b.customer_name, remaining);
       window.open(waLink, '_blank');
+
+      if (selectedBooking?.id === b.id) {
+        setSelectedBooking(null);
+      }
+      fetchBookings();
+    } catch (err: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Terjadi kesalahan sistem',
+        confirmButtonColor: '#b52330',
+      });
+    }
+  };
+
+  const handleUpgradeOccupancy = async (targetBooking?: Booking) => {
+    const b = targetBooking || selectedBooking;
+    if (!b || !b.rooms?.id) return;
+
+    try {
+      const resPkgs = await fetch(`/api/admin/rooms/${b.rooms.id}/pricing`);
+      const dataPkgs = await resPkgs.json();
+      const pkgs: any[] = dataPkgs.pricing_packages || [];
+
+      if (pkgs.length === 0) {
+        Swal.fire({
+          icon: 'info',
+          title: 'Tidak Ada Opsi Upgrade',
+          text: 'Belum ada opsi paket harga lain yang terdaftar untuk kamar ini.',
+          confirmButtonColor: '#b52330',
+        });
+        return;
+      }
+
+      const inputOptions: Record<string, string> = {};
+      pkgs.forEach((p) => {
+        inputOptions[p.id] = `${p.occupancy_label || p.label} — ${formatRupiah(p.price)}`;
+      });
+
+      const { value: selectedPkgId, isConfirmed } = await Swal.fire({
+        title: 'Upgrade Tipe Kamar / Keterisian',
+        html: `<div class="text-left text-sm space-y-2 mt-2">` +
+              `<p>Pilih tipe paket baru untuk <strong>${b.rooms.name}</strong> (${b.rooms.camps?.name || ''}):</p>` +
+              `<p class="text-xs text-amber-800 bg-amber-50 p-2.5 rounded border border-amber-200">⚠️ Penyesuaian harga paket akan otomatis memperbarui total harga & sisa pelunasan seluruh penghuni aktif di kamar ini.</p>` +
+              `</div>`,
+        input: 'select',
+        inputOptions,
+        inputPlaceholder: 'Pilih opsi paket upgrade...',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Proses Upgrade!',
+        cancelButtonText: 'Batal',
+      });
+
+      if (!isConfirmed || !selectedPkgId) return;
+
+      const resUpgrade = await fetch(`/api/admin/rooms/${b.rooms.id}/upgrade`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_package_id: selectedPkgId }),
+      });
+      const dataUpgrade = await resUpgrade.json();
+
+      if (!resUpgrade.ok) {
+        throw new Error(dataUpgrade.error || 'Gagal melakukan upgrade tipe kamar');
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Upgrade Kamar Berhasil!',
+        text: `Tipe kamar berhasil diubah menjadi ${dataUpgrade.package_name} (${formatRupiah(dataUpgrade.new_price)}/orang). Total ${dataUpgrade.updated_bookings_count} transaksi penghuni diperbarui.`,
+        confirmButtonColor: '#2563eb',
+      });
 
       if (selectedBooking?.id === b.id) {
         setSelectedBooking(null);
@@ -541,7 +615,7 @@ export default function AdminTransactionsPage() {
       {selectedBooking && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-xl border border-[#EAEAEA] shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col animate-scale-up">
-            
+
             {/* Modal Header */}
             <div className="p-5 border-b border-[#EAEAEA] flex justify-between items-center bg-neutral-50 rounded-t-xl">
               <div className="space-y-0.5">
@@ -564,10 +638,10 @@ export default function AdminTransactionsPage() {
                   <p className="font-bold text-on-surface">{selectedBooking.customer_name}</p>
                   <p className="text-xs text-on-surface-variant font-medium">{selectedBooking.whatsapp_number}</p>
                 </div>
-                 <div>
+                <div>
                   <p className="text-xs text-outline font-semibold uppercase tracking-wider">Camp & Kamar</p>
                   <p className="font-bold text-on-surface">{selectedBooking.rooms?.camps.name}</p>
-                  
+
                   {isReassigning ? (
                     <div className="flex items-center gap-2 mt-1">
                       <select
@@ -677,6 +751,14 @@ export default function AdminTransactionsPage() {
 
               {selectedBooking.status === 'confirmed' && (
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleUpgradeOccupancy()}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded transition-colors flex items-center gap-1 shadow-sm"
+                    title="Ubah / upgrade tipe keterisian kamar"
+                  >
+                    <span className="material-symbols-outlined text-sm">upgrade</span>
+                    Upgrade Tipe Kamar
+                  </button>
                   {selectedBooking.claimed_amount < selectedBooking.total_price && (
                     <button
                       onClick={() => handleSettleBalance()}

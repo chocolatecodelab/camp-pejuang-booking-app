@@ -8,6 +8,9 @@ interface PricingPackage {
   id?: string;
   room_id: string;
   label: string;
+  occupancy_label?: string | null;
+  occupancy_tier?: number;
+  slots_consumed?: number;
   duration_days: number;
   price: number;
   min_dp_amount: number | null;
@@ -20,6 +23,7 @@ interface Room {
   camp_id: string;
   name: string;
   floor_label: string;
+  capacity?: number;
   room_photo_urls: string[] | null;
   is_active: boolean;
 }
@@ -69,11 +73,11 @@ export default function AdminCampsPage() {
   });
   
   const [roomForm, setRoomForm] = useState({
-    name: '', floor_label: 'Lantai 1', room_photo_urls: [] as string[], is_active: true
+    name: '', floor_label: 'Lantai 1', capacity: 3, room_photo_urls: [] as string[], is_active: true
   });
 
   const [packageForm, setPackageForm] = useState({
-    label: '1 Bulan', duration_days: 30, price: 500000, min_dp_amount: '', sort_order: 1, is_active: true
+    label: '', occupancy_label: '', occupancy_tier: '' as number | string, slots_consumed: 1, duration_days: '' as number | string, price: '' as number | string, min_dp_amount: '', sort_order: 1, is_active: true
   });
 
   // Photo upload states
@@ -320,13 +324,14 @@ export default function AdminCampsPage() {
       setRoomForm({
         name: room.name,
         floor_label: room.floor_label,
+        capacity: room.capacity || 3,
         room_photo_urls: room.room_photo_urls || [],
         is_active: room.is_active
       });
     } else {
       setEditingRoom(null);
       setRoomForm({
-        name: '', floor_label: 'Lantai 1', room_photo_urls: [], is_active: true
+        name: '', floor_label: 'Lantai 1', capacity: 3, room_photo_urls: [], is_active: true
       });
     }
     setActiveModal('room');
@@ -339,6 +344,7 @@ export default function AdminCampsPage() {
       camp_id: selectedCamp.id,
       name: roomForm.name,
       floor_label: roomForm.floor_label,
+      capacity: Number(roomForm.capacity) || 3,
       room_photo_urls: roomForm.room_photo_urls.length > 0 ? roomForm.room_photo_urls : null,
       is_active: roomForm.is_active
     };
@@ -375,17 +381,28 @@ export default function AdminCampsPage() {
     if (pkg) {
       setEditingPackage(pkg);
       setPackageForm({
-        label: pkg.label,
-        duration_days: pkg.duration_days,
-        price: pkg.price,
+        label: pkg.label || '',
+        occupancy_label: pkg.occupancy_label || '',
+        occupancy_tier: pkg.occupancy_tier || '',
+        slots_consumed: pkg.slots_consumed || 1,
+        duration_days: pkg.duration_days || '',
+        price: pkg.price || '',
         min_dp_amount: pkg.min_dp_amount ? String(pkg.min_dp_amount) : '',
-        sort_order: pkg.sort_order,
+        sort_order: pkg.sort_order || 1,
         is_active: pkg.is_active
       });
     } else {
       setEditingPackage(null);
       setPackageForm({
-        label: '1 Bulan', duration_days: 30, price: 500000, min_dp_amount: '', sort_order: 1, is_active: true
+        label: '',
+        occupancy_label: '',
+        occupancy_tier: '',
+        slots_consumed: 1,
+        duration_days: '',
+        price: '',
+        min_dp_amount: '',
+        sort_order: (packages.length + 1) || 1,
+        is_active: true
       });
     }
     setActiveModal('package');
@@ -396,11 +413,14 @@ export default function AdminCampsPage() {
     if (!selectedRoom) return;
     const payload = {
       room_id: selectedRoom.id,
-      label: packageForm.label,
-      duration_days: Number(packageForm.duration_days),
-      price: Number(packageForm.price),
+      label: packageForm.label || packageForm.occupancy_label || 'Paket Sewa',
+      occupancy_label: packageForm.occupancy_label || packageForm.label || 'Sharing',
+      occupancy_tier: Number(packageForm.occupancy_tier) || 1,
+      slots_consumed: Number(packageForm.slots_consumed) || 1,
+      duration_days: Number(packageForm.duration_days) || 30,
+      price: Number(packageForm.price) || 0,
       min_dp_amount: packageForm.min_dp_amount ? Number(packageForm.min_dp_amount) : null,
-      sort_order: Number(packageForm.sort_order),
+      sort_order: Number(packageForm.sort_order) || 1,
       is_active: packageForm.is_active
     };
 
@@ -1018,17 +1038,33 @@ export default function AdminCampsPage() {
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Label Lantai</label>
-                <select
-                  value={roomForm.floor_label}
-                  onChange={(e) => setRoomForm({ ...roomForm, floor_label: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
-                >
-                  <option value="Lantai 1">Lantai 1</option>
-                  <option value="Lantai 2">Lantai 2</option>
-                  <option value="Lantai 3">Lantai 3</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Label Lantai</label>
+                  <select
+                    value={roomForm.floor_label}
+                    onChange={(e) => setRoomForm({ ...roomForm, floor_label: e.target.value })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  >
+                    <option value="Lantai 1">Lantai 1</option>
+                    <option value="Lantai 2">Lantai 2</option>
+                    <option value="Lantai 3">Lantai 3</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Kapasitas Kamar (Bed)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    required
+                    value={roomForm.capacity}
+                    onChange={(e) => setRoomForm({ ...roomForm, capacity: Number(e.target.value) })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                  <p className="text-[10px] text-outline">Jumlah maksimal bed slot dalam kamar.</p>
+                </div>
               </div>
 
               {/* Room Photos Upload */}
@@ -1122,19 +1158,58 @@ export default function AdminCampsPage() {
 
             {/* Body (Scrollable) */}
             <div className="p-6 overflow-y-auto flex-grow space-y-4 text-sm">
-              <div className="space-y-1">
-                <label className="text-label-sm font-semibold">Label Durasi</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: 1 Bulan, 2 Minggu"
-                  value={packageForm.label}
-                  onChange={(e) => setPackageForm({ ...packageForm, label: e.target.value })}
-                  className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Nama Opsi Hunian (Sharing/Private)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Sharing 3 Orang, Private Sendiri"
+                    value={packageForm.occupancy_label}
+                    onChange={(e) => setPackageForm({
+                      ...packageForm,
+                      occupancy_label: e.target.value,
+                    })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                  <p className="text-[10px] text-outline">Judul tipe kamar (cth: Sharing 3 Orang)</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Label Durasi / Periode</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: 1 Bulan, 2 Minggu"
+                    value={packageForm.label}
+                    onChange={(e) => setPackageForm({
+                      ...packageForm,
+                      label: e.target.value,
+                    })}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                  <p className="text-[10px] text-outline">Label periode (cth: 1 Bulan, 2 Minggu)</p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-label-sm font-semibold">Target Penghuni</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    required
+                    value={packageForm.occupancy_tier}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setPackageForm({ ...packageForm, occupancy_tier: val, slots_consumed: 1 });
+                    }}
+                    className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
+                  />
+                  <p className="text-[10px] text-outline">Jumlah org (cth: 3)</p>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-label-sm font-semibold">Durasi (Hari)</label>
                   <input
@@ -1145,10 +1220,11 @@ export default function AdminCampsPage() {
                     onChange={(e) => setPackageForm({ ...packageForm, duration_days: Number(e.target.value) })}
                     className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
                   />
+                  <p className="text-[10px] text-outline">30 hari = 1 bln</p>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-label-sm font-semibold">Urutan Sortir (sort_order)</label>
+                  <label className="text-label-sm font-semibold">Urutan Sortir</label>
                   <input
                     type="number"
                     required

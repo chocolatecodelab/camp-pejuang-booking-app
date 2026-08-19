@@ -20,8 +20,8 @@ export const holdBookingSchema = z.object({
 export const uploadProofSchema = z.object({
   file_size: z.number().max(5 * 1024 * 1024, 'Maksimal 5MB'),
   file_type: z.string().refine(
-    (type) => ['image/jpeg', 'image/png', 'application/pdf'].includes(type),
-    'Format file harus JPG, PNG, atau PDF'
+    (type) => ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(type),
+    'Format file harus JPG, PNG, WEBP, atau PDF'
   ),
 });
 
@@ -51,6 +51,7 @@ export const roomSchema = z.object({
   camp_id: z.string().uuid(),
   name: z.string().min(1).max(100),
   floor_label: z.string().max(50).optional().nullable(),
+  capacity: z.number().int().min(1).max(20).default(1),
   room_photo_urls: z.array(z.string()).optional().nullable(),
   is_active: z.boolean().optional().default(true),
 });
@@ -58,6 +59,9 @@ export const roomSchema = z.object({
 export const pricingPackageSchema = z.object({
   room_id: z.string().uuid(),
   label: z.string().min(1).max(50),
+  occupancy_label: z.string().max(100).optional().nullable(),
+  occupancy_tier: z.number().int().min(1).max(20).default(1),
+  slots_consumed: z.number().int().min(1).max(20).default(1),
   duration_days: z.number().int().min(1).max(365),
   price: z.number().positive(),
   min_dp_amount: z.number().positive().optional().nullable(),

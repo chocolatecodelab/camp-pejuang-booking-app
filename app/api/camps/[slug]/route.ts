@@ -15,9 +15,9 @@ export async function GET(
     .select(`
       *,
       rooms (
-        id, name, floor_label, room_photo_urls, is_active,
+        id, name, floor_label, capacity, active_occupancy_limit, active_occupancy_tier, room_photo_urls, is_active,
         pricing_packages (
-          id, label, duration_days, price, min_dp_amount, sort_order, is_active
+          id, label, occupancy_label, occupancy_tier, slots_consumed, duration_days, price, min_dp_amount, sort_order, is_active
         )
       )
     `)
@@ -41,10 +41,14 @@ export async function GET(
 
   // Get active booking locks for all rooms in this camp
   const roomIds = rooms.map((r: any) => r.id);
-  const { data: locks } = await supabaseAdmin
-    .from('booking_locks')
-    .select('room_id, stay_period')
-    .in('room_id', roomIds);
+  let locks: any[] = [];
+  if (roomIds.length > 0) {
+    const { data: locksData } = await supabaseAdmin
+      .from('booking_locks')
+      .select('room_id, stay_period')
+      .in('room_id', roomIds);
+    locks = locksData || [];
+  }
 
   return NextResponse.json({
     camp: {
