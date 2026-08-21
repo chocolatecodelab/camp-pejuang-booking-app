@@ -45,7 +45,10 @@ export async function GET(
   if (roomIds.length > 0) {
     const { data: locksData } = await supabaseAdmin
       .from('booking_locks')
-      .select('room_id, stay_period')
+      .select(`
+        room_id, stay_period, booking_id,
+        bookings (id, slots_reserved, status, hold_expires_at, pricing_packages(occupancy_tier, occupancy_label, slots_consumed))
+      `)
       .in('room_id', roomIds);
     locks = locksData || [];
   }

@@ -69,7 +69,13 @@ BEGIN
   END IF;
 
   v_check_out := p_check_in + v_package.duration_days;
-  v_slots_consumed := COALESCE(v_package.slots_consumed, 1);
+
+  -- If package is Private (occupancy_tier = 1), it takes the entire room capacity
+  IF COALESCE(v_package.occupancy_tier, 1) = 1 THEN
+    v_slots_consumed := v_room.capacity;
+  ELSE
+    v_slots_consumed := COALESCE(v_package.slots_consumed, 1);
+  END IF;
 
   -- Calculate existing occupied slots for overlapping active bookings
   SELECT COALESCE(SUM(COALESCE(b.slots_reserved, 1)), 0) INTO v_used_slots
@@ -79,6 +85,16 @@ BEGIN
     AND (b.status != 'hold' OR b.hold_expires_at > NOW())
     AND b.check_in < v_check_out
     AND b.check_out > p_check_in;
+
+  -- Validation: If room already has occupants, private booking is rejected
+  IF v_used_slots > 0 AND COALESCE(v_package.occupancy_tier, 1) = 1 THEN
+    RAISE EXCEPTION 'room_already_shared';
+  END IF;
+
+  -- Validation: If room is already locked to a tier, differing tier is rejected
+  IF v_used_slots > 0 AND v_room.active_occupancy_limit IS NOT NULL AND v_package.occupancy_tier != v_room.active_occupancy_limit THEN
+    RAISE EXCEPTION 'tier_mismatch';
+  END IF;
 
   -- Determine effective occupancy limit
   v_effective_limit := COALESCE(v_room.active_occupancy_limit, v_room.capacity, 1);
@@ -102,7 +118,7 @@ BEGIN
     p_customer_name, p_whatsapp, p_notes,
     p_check_in, v_check_out,
     p_payment_type, p_payment_channel, p_claimed_amount, v_package.price,
-    'hold', NOW() + INTERVAL '24 hours'
+    'hold', NOW() + INTERVAL '1 hour'
   ) RETURNING * INTO v_booking;
 
   -- Insert into booking_locks

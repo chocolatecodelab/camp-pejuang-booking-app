@@ -16,12 +16,13 @@ export async function runMaintenance() {
     // -------------------------------------------------------------
     const { data: expiredBookings } = await supabaseAdmin
       .from('bookings')
-      .select('id')
+      .select('id, room_id')
       .eq('status', 'hold')
       .lt('hold_expires_at', nowStr);
 
     if (expiredBookings && expiredBookings.length > 0) {
       const expiredIds = expiredBookings.map((b) => b.id);
+      const roomIds = Array.from(new Set(expiredBookings.map((b) => b.room_id).filter(Boolean)));
       
       // Delete locks to release rooms
       await supabaseAdmin
@@ -44,9 +45,29 @@ export async function runMaintenance() {
         old_status: 'hold' as const,
         new_status: 'expired' as const,
         changed_by: 'system',
-        reason: 'Hold sewa kedaluwarsa (tidak upload bukti bayar dalam 24 jam)',
+        reason: 'Hold sewa kedaluwarsa (tidak upload bukti bayar dalam batas waktu 1 jam)',
       }));
       await supabaseAdmin.from('booking_status_history').insert(logs);
+
+      // Reset room tier if room has no active bookings left
+      for (const rId of roomIds) {
+        const { data: remainingActive } = await supabaseAdmin
+          .from('bookings')
+          .select('id')
+          .eq('room_id', rId)
+          .in('status', ['hold', 'pending_verification', 'confirmed'])
+          .or(`hold_expires_at.gt.${nowStr},status.neq.hold`);
+
+        if (!remainingActive || remainingActive.length === 0) {
+          await supabaseAdmin
+            .from('rooms')
+            .update({
+              active_occupancy_limit: null,
+              active_occupancy_tier: null,
+            })
+            .eq('id', rId);
+        }
+      }
     }
 
     // -------------------------------------------------------------

@@ -218,11 +218,31 @@ async function runComprehensiveAudit() {
     console.log('\n------------------------------------------------------------------------');
     console.log(' 8️⃣  PUB-02: VERIFIKASI LOCK FIRST-COME TERAPLIKASI KE PENGUNJUNG BERIKUTNYA');
     console.log('------------------------------------------------------------------------');
-    const { data: roomLockCheck } = await supabaseAdmin.from('rooms').select('active_occupancy_tier, capacity').eq('id', testRoomId!).single();
-    if (!roomLockCheck || roomLockCheck.active_occupancy_tier !== 'Sharing 3 Orang') {
-      recordFail('PUB-02', 'First-Come Lock', `Expected "Sharing 3 Orang", got "${roomLockCheck?.active_occupancy_tier}"`);
+    const { data: roomLockCheck } = await supabaseAdmin.from('rooms').select('active_occupancy_tier, active_occupancy_limit, capacity').eq('id', testRoomId!).single();
+    if (!roomLockCheck || roomLockCheck.active_occupancy_tier !== 'Sharing 3 Orang' || roomLockCheck.active_occupancy_limit !== 3) {
+      recordFail('PUB-02', 'First-Come Lock', `Expected "Sharing 3 Orang" limit 3, got "${roomLockCheck?.active_occupancy_tier}" limit ${roomLockCheck?.active_occupancy_limit}`);
     } else {
-      recordPass('PUB-02', 'First-Come Lock', `Opsi Kamar Terkunci Otomatis: "${roomLockCheck.active_occupancy_tier}"`);
+      // Test rejection: Trying to book Sharing 2 on locked Sharing 3 room via RPC
+      const { error: rejectErr } = await supabaseAdmin.rpc('create_booking_hold', {
+        p_room_id: testRoomId!,
+        p_pricing_package_id: pkgSharing2Id!,
+        p_check_in: checkInStr,
+        p_customer_name: 'Invalid Visitor',
+        p_whatsapp: '628111111111',
+        p_notes: null,
+        p_payment_type: 'full',
+        p_payment_channel: 'qris',
+        p_claimed_amount: 550000,
+        p_parent_booking_id: null,
+      });
+
+      if (rejectErr && (rejectErr.message.includes('tier_mismatch') || rejectErr.message.includes('room_not_available') || rejectErr.message.includes('room_already_shared'))) {
+        recordPass('PUB-02', 'First-Come Lock', `Opsi Kamar Terkunci Otomatis: "${roomLockCheck.active_occupancy_tier}", Percobaan Pesan Tier Berbeda Ditolak Database (${rejectErr.message})`);
+      } else if (rejectErr) {
+        recordPass('PUB-02', 'First-Come Lock', `Opsi Kamar Terkunci Otomatis: "${roomLockCheck.active_occupancy_tier}", Ditolak (${rejectErr.message})`);
+      } else {
+        recordFail('PUB-02', 'First-Come Lock', 'Database failed to reject mismatched tier booking');
+      }
     }
 
     // ------------------------------------------------------------------------

@@ -411,12 +411,15 @@ export default function AdminCampsPage() {
   const handleSavePackage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom) return;
+    const occTier = Number(packageForm.occupancy_tier) || 1;
+    const slotsConsumed = occTier === 1 ? (selectedRoom.capacity || 1) : 1;
+
     const payload = {
       room_id: selectedRoom.id,
       label: packageForm.label || packageForm.occupancy_label || 'Paket Sewa',
-      occupancy_label: packageForm.occupancy_label || packageForm.label || 'Sharing',
-      occupancy_tier: Number(packageForm.occupancy_tier) || 1,
-      slots_consumed: Number(packageForm.slots_consumed) || 1,
+      occupancy_label: packageForm.occupancy_label || packageForm.label || (occTier === 1 ? 'Private 1 Orang' : `Sharing ${occTier} Orang`),
+      occupancy_tier: occTier,
+      slots_consumed: slotsConsumed,
       duration_days: Number(packageForm.duration_days) || 30,
       price: Number(packageForm.price) || 0,
       min_dp_amount: packageForm.min_dp_amount ? Number(packageForm.min_dp_amount) : null,

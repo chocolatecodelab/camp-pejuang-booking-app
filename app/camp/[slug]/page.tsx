@@ -45,6 +45,17 @@ interface Camp {
 interface BookingLock {
   room_id: string;
   stay_period: string; // e.g. [2026-07-01,2026-08-01)
+  booking_id?: string;
+  bookings?: {
+    id?: string;
+    slots_reserved?: number;
+    status?: string;
+    pricing_packages?: {
+      occupancy_tier?: number;
+      occupancy_label?: string;
+      slots_consumed?: number;
+    } | null;
+  } | null;
 }
 
 function RoomCard({
@@ -69,27 +80,74 @@ function RoomCard({
     ? room.pricing_packages
     : [];
 
-  // Pre-select package matching selectedDurationDays or first package
-  const matchedPkg = selectedDurationDays > 0
-    ? (availablePkgs.find((p) => p.duration_days === selectedDurationDays) || availablePkgs[0])
-    : availablePkgs[0];
+  const effectiveLimit = room.active_occupancy_limit || capacity;
+  const activeOccupancyTier = room.active_occupancy_tier;
 
-  const [selectedPkg, setSelectedPkg] = useState<PricingPackage | null>(matchedPkg || null);
+  // Calculate occupied count
+  const occupiedCount = getOccupiedCount(room.id, selectedDurationDays || 30);
+  const remainingSlots = Math.max(0, effectiveLimit - occupiedCount);
+  const booked = remainingSlots === 0 || occupiedCount >= capacity;
 
-  // When selectedDurationDays from top checker changes, sync selectedPkg
-  useEffect(() => {
-    if (selectedDurationDays > 0 && availablePkgs.length > 0) {
-      const found = availablePkgs.find((p) => p.duration_days === selectedDurationDays);
-      if (found) setSelectedPkg(found);
+  // Helper to determine if a package is locked/disabled
+  const isPackageDisabled = (p: PricingPackage) => {
+    if (booked) return true;
+    const pTier = p.occupancy_tier || 1;
+    const isPrivate = pTier === 1 || (p.occupancy_label && p.occupancy_label.toLowerCase().includes('private'));
+
+    if (occupiedCount > 0) {
+      // If room is already shared with someone, Private package is disabled
+      if (isPrivate) return true;
+      // If room is locked to a specific tier, other tiers are disabled
+      if (room.active_occupancy_limit && pTier !== room.active_occupancy_limit) {
+        return true;
+      }
     }
-  }, [selectedDurationDays, availablePkgs]);
+    return false;
+  };
 
-  const currentPkg = selectedPkg || matchedPkg || availablePkgs[0];
-  const activeDurationDays = currentPkg?.duration_days || selectedDurationDays || 30;
+  const getPackageDisabledReason = (p: PricingPackage) => {
+    const pTier = p.occupancy_tier || 1;
+    const isPrivate = pTier === 1 || (p.occupancy_label && p.occupancy_label.toLowerCase().includes('private'));
 
-  const occupiedCount = getOccupiedCount(room.id, activeDurationDays);
-  const remainingSlots = Math.max(0, capacity - occupiedCount);
-  const booked = remainingSlots === 0;
+    if (occupiedCount > 0) {
+      if (isPrivate) {
+        return 'Terkunci (Sudah ada penghuni)';
+      }
+      if (room.active_occupancy_limit && pTier !== room.active_occupancy_limit) {
+        return `Terkunci (${activeOccupancyTier || `Sharing ${room.active_occupancy_limit} Org`})`;
+      }
+    }
+    return null;
+  };
+
+  // Find first enabled package
+  const getFirstValidPkg = () => {
+    const valid = availablePkgs.filter((p) => !isPackageDisabled(p));
+    if (valid.length === 0) return availablePkgs[0] || null;
+
+    if (selectedDurationDays > 0) {
+      const match = valid.find((p) => p.duration_days === selectedDurationDays);
+      if (match) return match;
+    }
+    return valid[0];
+  };
+
+  const [selectedPkg, setSelectedPkg] = useState<PricingPackage | null>(() => getFirstValidPkg());
+
+  // Keep selectedPkg valid when duration or locks change
+  useEffect(() => {
+    const valid = availablePkgs.filter((p) => !isPackageDisabled(p));
+    if (valid.length > 0) {
+      if (!selectedPkg || isPackageDisabled(selectedPkg)) {
+        setSelectedPkg(getFirstValidPkg());
+      } else if (selectedDurationDays > 0) {
+        const found = valid.find((p) => p.duration_days === selectedDurationDays);
+        if (found) setSelectedPkg(found);
+      }
+    }
+  }, [selectedDurationDays, availablePkgs, occupiedCount, room.active_occupancy_limit]);
+
+  const currentPkg = selectedPkg && !isPackageDisabled(selectedPkg) ? selectedPkg : getFirstValidPkg();
 
   const photos = room.room_photo_urls && room.room_photo_urls.length > 0
     ? room.room_photo_urls
@@ -128,9 +186,9 @@ function RoomCard({
           }`}>
             <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
             {booked
-              ? `Penuh (${capacity}/${capacity})`
+              ? `Penuh (${effectiveLimit}/${effectiveLimit})`
               : occupiedCount > 0
-                ? `Terisi ${occupiedCount}/${capacity} (Sisa ${remainingSlots})`
+                ? `Terisi ${occupiedCount}/${effectiveLimit} (Sisa ${remainingSlots})`
                 : `Kosong (0/${capacity})`}
           </span>
         </div>
@@ -164,14 +222,18 @@ function RoomCard({
             <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">{floor}</span>
           </div>
 
-          {room.active_occupancy_tier ? (
+          {activeOccupancyTier ? (
             <div className="text-xs text-amber-800 bg-amber-50/90 p-2.5 rounded-lg border border-amber-200 space-y-0.5">
               <div className="font-bold flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">lock</span>
-                Kamar Terisi ({occupiedCount}/${capacity} Orang): {room.active_occupancy_tier}
+                {booked
+                  ? `Kamar Terisi Penuh: ${activeOccupancyTier}`
+                  : `Kamar Terisi (${occupiedCount}/${effectiveLimit} Orang): ${activeOccupancyTier}`}
               </div>
               <p className="text-[11px] text-amber-700 leading-tight">
-                Sisa {remainingSlots} orang kosong otomatis mengikuti opsi {room.active_occupancy_tier}.
+                {booked
+                  ? `Kamar ini telah terisi penuh untuk periode sewa yang dipilih.`
+                  : `Sisa ${remainingSlots} orang kosong otomatis mengikuti opsi ${activeOccupancyTier}.`}
               </p>
             </div>
           ) : isMultiOccupancy && (
@@ -191,6 +253,8 @@ function RoomCard({
             <div className="flex flex-col gap-2">
               {availablePkgs.map((p) => {
                 const isSelected = currentPkg?.id === p.id;
+                const disabled = isPackageDisabled(p);
+                const disabledReason = getPackageDisabledReason(p);
 
                 // Determine Occupancy Title
                 let titleText = p.occupancy_label && p.occupancy_label.trim() !== '' && p.occupancy_label !== p.label
@@ -213,29 +277,51 @@ function RoomCard({
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setSelectedPkg(p)}
-                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between group ${isSelected
-                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
-                      : 'border-border-subtle bg-white hover:bg-neutral-50'
-                      }`}
+                    disabled={disabled}
+                    onClick={() => !disabled && setSelectedPkg(p)}
+                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between group ${
+                      disabled
+                        ? 'opacity-40 bg-neutral-100/80 border-border-subtle cursor-not-allowed select-none'
+                        : isSelected
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
+                          : 'border-border-subtle bg-white hover:bg-neutral-50'
+                    }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'border-primary bg-primary text-white' : 'border-neutral-300'
-                        }`}>
-                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                      <div
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                          disabled
+                            ? 'border-neutral-300 bg-neutral-200 text-neutral-400'
+                            : isSelected
+                              ? 'border-primary bg-primary text-white'
+                              : 'border-neutral-300'
+                        }`}
+                      >
+                        {isSelected && !disabled && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                        {disabled && <span className="material-symbols-outlined text-[10px]">lock</span>}
                       </div>
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="font-bold text-xs text-on-surface">
+                          <p className={`font-bold text-xs ${disabled ? 'text-neutral-500' : 'text-on-surface'}`}>
                             {titleText}
                           </p>
-                          <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border flex items-center gap-0.5 ${isPrivate
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-primary/10 text-primary border-primary/20'
-                            }`}>
-                            <span className="material-symbols-outlined text-[10px]">group</span>
-                            {isPrivate ? '1 Kamar Sendiri' : `1 Kamar Isi ${targetCount} Orang`}
-                          </span>
+                          {disabledReason ? (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-neutral-200 text-neutral-600 border border-neutral-300 flex items-center gap-0.5">
+                              <span className="material-symbols-outlined text-[10px]">lock</span>
+                              {disabledReason}
+                            </span>
+                          ) : (
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border flex items-center gap-0.5 ${
+                                isPrivate
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : 'bg-primary/10 text-primary border-primary/20'
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-[10px]">group</span>
+                              {isPrivate ? '1 Kamar Sendiri' : `1 Kamar Isi ${targetCount} Orang`}
+                            </span>
+                          )}
                         </div>
                         <p className="text-[10px] text-slate-500 font-medium">
                           {durationText} {p.min_dp_amount ? `• Bisa DP ${formatRupiah(p.min_dp_amount)}` : '• Bayar Lunas'}
@@ -243,8 +329,12 @@ function RoomCard({
                       </div>
                     </div>
                     <div className="text-right shrink-0 ml-2">
-                      <span className="font-bold text-sm text-primary block">{formatRupiah(p.price)}</span>
-                      <span className="text-[9px] text-slate-500 font-medium block">{isPrivate ? '/ kamar' : '/ orang'}</span>
+                      <span className={`font-bold text-sm block ${disabled ? 'text-neutral-400' : 'text-primary'}`}>
+                        {formatRupiah(p.price)}
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-medium block">
+                        {isPrivate ? '/ kamar' : '/ orang'}
+                      </span>
                     </div>
                   </button>
                 );
@@ -341,6 +431,9 @@ export default function CampDetailPage() {
     const reqStart = new Date(checkInDate).getTime();
     const reqEnd = new Date(checkOutDate).getTime();
 
+    const roomObj = rooms.find((r) => r.id === roomId);
+    const roomCapacity = roomObj?.capacity || 1;
+
     const roomLocks = locks.filter((l) => l.room_id === roomId);
     let count = 0;
     for (const lock of roomLocks) {
@@ -349,7 +442,9 @@ export default function CampDetailPage() {
         const lockStart = new Date(matches[1]).getTime();
         const lockEnd = new Date(matches[2]).getTime();
         if (reqStart < lockEnd && reqEnd > lockStart) {
-          count++;
+          const isPrivateBooking = lock.bookings?.pricing_packages?.occupancy_tier === 1;
+          const slots = lock.bookings?.slots_reserved || (isPrivateBooking ? roomCapacity : 1);
+          count += slots;
         }
       }
     }
@@ -580,7 +675,7 @@ export default function CampDetailPage() {
             </div>
 
             <div className="p-4 bg-background-warm rounded-lg text-label-sm text-on-surface-variant/80 leading-relaxed border border-border-subtle">
-              Kamar akan di-hold selama <strong>24 jam</strong> setelah Anda melakukan pemesanan untuk proses verifikasi bukti transfer manual oleh admin.
+              Kamar akan di-hold selama <strong>1 jam (60 menit)</strong> setelah Anda melakukan pemesanan untuk proses transfer & upload bukti pembayaran.
             </div>
           </div>
         </section>
