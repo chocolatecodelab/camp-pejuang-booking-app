@@ -46,13 +46,13 @@ export default function AdminCampsPage() {
   const [camps, setCamps] = useState<Camp[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [packages, setPackages] = useState<PricingPackage[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
-  
+
   // Selection states for drilling down
   const [selectedCamp, setSelectedCamp] = useState<Camp | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  
+
   // Modal states
   const [activeModal, setActiveModal] = useState<'none' | 'camp' | 'room' | 'package'>('none');
   const [editingCamp, setEditingCamp] = useState<Camp | null>(null);
@@ -71,7 +71,7 @@ export default function AdminCampsPage() {
     gallery_photo_urls: [] as string[],
     is_active: true
   });
-  
+
   const [roomForm, setRoomForm] = useState({
     name: '', floor_label: 'Lantai 1', capacity: 3, room_photo_urls: [] as string[], is_active: true
   });
@@ -307,7 +307,7 @@ export default function AdminCampsPage() {
       }
 
       if (!res.ok) throw new Error('Gagal menyimpan Camp');
-      
+
       Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Camp berhasil disimpan', confirmButtonColor: '#b52330' });
       setActiveModal('none');
       fetchCamps();
@@ -366,7 +366,7 @@ export default function AdminCampsPage() {
       }
 
       if (!res.ok) throw new Error('Gagal menyimpan Kamar');
-      
+
       Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Kamar berhasil disimpan', confirmButtonColor: '#b52330' });
       setActiveModal('none');
       fetchRooms(selectedCamp.id!);
@@ -441,7 +441,7 @@ export default function AdminCampsPage() {
       }
 
       if (!res.ok) throw new Error('Gagal menyimpan Paket Harga');
-      
+
       Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Paket Harga berhasil disimpan', confirmButtonColor: '#b52330' });
       setActiveModal('none');
       fetchPackages(selectedRoom.id!);
@@ -574,7 +574,7 @@ export default function AdminCampsPage() {
 
       {/* Main Multi-drilldown Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* Column 1: Camps List (Span 4) */}
         <div className="lg:col-span-4 bg-white rounded-xl border border-[#EAEAEA] shadow-sm p-4 space-y-4">
           <h3 className="text-label-sm font-bold text-primary uppercase tracking-wider">1. Pilih Camp</h3>
@@ -583,11 +583,10 @@ export default function AdminCampsPage() {
               <div
                 key={camp.id}
                 onClick={() => setSelectedCamp(camp)}
-                className={`p-3.5 rounded-lg border transition-all cursor-pointer flex justify-between items-center ${
-                  selectedCamp?.id === camp.id
+                className={`p-3.5 rounded-lg border transition-all cursor-pointer flex justify-between items-center ${selectedCamp?.id === camp.id
                     ? 'border-primary bg-primary/5'
                     : 'border-[#EAEAEA] hover:bg-neutral-50'
-                }`}
+                  }`}
               >
                 <div className="space-y-0.5 min-w-0">
                   <p className="font-bold text-on-surface truncate">{camp.name}</p>
@@ -653,11 +652,10 @@ export default function AdminCampsPage() {
                   <div
                     key={room.id}
                     onClick={() => setSelectedRoom(room)}
-                    className={`p-3.5 rounded-lg border transition-all cursor-pointer flex justify-between items-center ${
-                      selectedRoom?.id === room.id
+                    className={`p-3.5 rounded-lg border transition-all cursor-pointer flex justify-between items-center ${selectedRoom?.id === room.id
                         ? 'border-primary bg-primary/5'
                         : 'border-[#EAEAEA] hover:bg-neutral-50'
-                    }`}
+                      }`}
                   >
                     <div className="space-y-0.5">
                       <p className="font-bold text-on-surface">{room.name}</p>
@@ -716,36 +714,67 @@ export default function AdminCampsPage() {
               {packages.length === 0 ? (
                 <p className="text-xs text-outline py-4 text-center">Belum ada paket harga di kamar ini.</p>
               ) : (
-                packages.map((pkg) => (
-                  <div
-                    key={pkg.id}
-                    className="p-3.5 rounded-lg border border-[#EAEAEA] flex justify-between items-center"
-                  >
-                    <div className="space-y-0.5">
-                      <p className="font-bold text-on-surface">{pkg.label} ({pkg.duration_days} Hari)</p>
-                      <p className="text-xs text-primary font-bold">{formatRupiah(pkg.price)}</p>
-                      {pkg.min_dp_amount && (
-                        <p className="text-[10px] text-success-green font-medium">Bisa DP mulai {formatRupiah(pkg.min_dp_amount)}</p>
-                      )}
+                packages.map((pkg) => {
+                  const occupancyText = pkg.occupancy_label && pkg.occupancy_label.trim() !== ''
+                    ? pkg.occupancy_label
+                    : pkg.occupancy_tier === 3
+                      ? 'Sharing 3 Orang'
+                      : pkg.occupancy_tier === 2
+                        ? 'Sharing 2 Orang'
+                        : pkg.occupancy_tier === 1
+                          ? 'Private 1 Kamar'
+                          : 'Sharing';
+
+                  const targetCount = pkg.occupancy_tier || (occupancyText.includes('3') ? 3 : occupancyText.includes('2') ? 2 : 1);
+                  const isPrivate = targetCount === 1 || occupancyText.toLowerCase().includes('private');
+
+                  return (
+                    <div
+                      key={pkg.id}
+                      className="p-3.5 rounded-xl border border-[#EAEAEA] bg-white hover:border-primary/30 transition-all flex justify-between items-center shadow-xs"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-on-surface">{occupancyText}</span>
+                          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border flex items-center gap-1 ${isPrivate
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-primary/10 text-primary border-primary/20'
+                            }`}>
+                            <span className="material-symbols-outlined text-[12px]">group</span>
+                            {isPrivate ? '1 Orang (Private)' : `Sharing ${targetCount} Orang`}
+                          </span>
+                        </div>
+                        <p className="text-xs text-outline font-medium">
+                          Durasi: <span className="text-on-surface font-semibold">{pkg.label} ({pkg.duration_days} Hari)</span>
+                        </p>
+                        <div className="flex items-center gap-2 pt-0.5">
+                          <span className="text-xs text-primary font-bold">{formatRupiah(pkg.price)}</span>
+                          {pkg.min_dp_amount ? (
+                            <span className="text-[10px] text-success-green font-medium">• Bisa DP {formatRupiah(pkg.min_dp_amount)}</span>
+                          ) : (
+                            <span className="text-[10px] text-outline font-medium">• Wajib Bayar Lunas</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <button
+                          onClick={() => handleOpenPackageModal(pkg)}
+                          className="p-1.5 rounded-lg hover:bg-neutral-100 text-outline hover:text-on-surface transition-colors"
+                          title="Edit Paket"
+                        >
+                          <span className="material-symbols-outlined text-base">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeletePackage(pkg)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-800 transition-colors"
+                          title="Hapus Paket"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => handleOpenPackageModal(pkg)}
-                        className="p-1 rounded hover:bg-neutral-200 text-outline hover:text-on-surface"
-                        title="Edit Paket"
-                      >
-                        <span className="material-symbols-outlined text-sm font-bold">edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeletePackage(pkg)}
-                        className="p-1 rounded hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
-                        title="Hapus Paket"
-                      >
-                        <span className="material-symbols-outlined text-sm font-bold">delete</span>
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
@@ -911,7 +940,7 @@ export default function AdminCampsPage() {
                     </span>
                   ) : null}
                 </div>
-                
+
                 <input
                   type="url"
                   placeholder="Contoh: https://www.youtube.com/watch?v=dQw4w9WgXcQ atau https://youtu.be/..."
@@ -1053,7 +1082,7 @@ export default function AdminCampsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-label-sm font-semibold">Kapasitas Kamar (Bed)</label>
+                  <label className="text-label-sm font-semibold">Kapasitas Maksimal (Orang)</label>
                   <input
                     type="number"
                     min={1}
@@ -1063,7 +1092,7 @@ export default function AdminCampsPage() {
                     onChange={(e) => setRoomForm({ ...roomForm, capacity: Number(e.target.value) })}
                     className="w-full p-2 border border-[#EAEAEA] rounded focus:outline-none focus:border-primary"
                   />
-                  <p className="text-[10px] text-outline">Jumlah maksimal bed slot dalam kamar.</p>
+                  <p className="text-[10px] text-outline">Jumlah maksimal orang/penghuni dalam kamar ini (cth: 3 orang).</p>
                 </div>
               </div>
 

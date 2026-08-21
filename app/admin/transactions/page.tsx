@@ -46,7 +46,14 @@ export default function AdminTransactionsPage() {
 
   // Room reassignment states
   const [isReassigning, setIsReassigning] = useState(false);
-  const [campRooms, setCampRooms] = useState<{ id: string; name: string; floor_label: string | null }[]>([]);
+  const [campRooms, setCampRooms] = useState<{
+    id: string;
+    name: string;
+    floor_label: string | null;
+    capacity?: number;
+    active_occupancy_limit?: number | null;
+    active_occupancy_tier?: string | null;
+  }[]>([]);
   const [selectedNewRoomId, setSelectedNewRoomId] = useState('');
   const [reassignLoading, setReassignLoading] = useState(false);
 
@@ -413,7 +420,18 @@ export default function AdminTransactionsPage() {
 
       const inputOptions: Record<string, string> = {};
       pkgs.forEach((p) => {
-        inputOptions[p.id] = `${p.occupancy_label || p.label} — ${formatRupiah(p.price)}`;
+        const occupancyTitle = p.occupancy_label && p.occupancy_label.trim() !== ''
+          ? p.occupancy_label
+          : p.occupancy_tier === 3
+          ? 'Sharing 3 Orang'
+          : p.occupancy_tier === 2
+          ? 'Sharing 2 Orang'
+          : p.occupancy_tier === 1
+          ? 'Private 1 Kamar'
+          : `Paket ${p.label}`;
+
+        const durationInfo = p.label && p.label !== occupancyTitle ? `(${p.label} / ${p.duration_days} Hari)` : `(${p.duration_days} Hari)`;
+        inputOptions[p.id] = `${occupancyTitle} ${durationInfo} — ${formatRupiah(p.price)}/orang`;
       });
 
       const { value: selectedPkgId, isConfirmed } = await Swal.fire({
@@ -650,11 +668,15 @@ export default function AdminTransactionsPage() {
                         disabled={reassignLoading}
                         className="p-1.5 rounded border border-outline-variant bg-white text-xs font-semibold focus:outline-none focus:border-primary text-slate-800"
                       >
-                        {campRooms.map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {r.name} ({r.floor_label || 'Lantai 1'})
-                          </option>
-                        ))}
+                        {campRooms.map((r) => {
+                          const cap = r.capacity || 1;
+                          const tierInfo = r.active_occupancy_tier ? `• Terkunci: ${r.active_occupancy_tier}` : '• Bebas Opsi';
+                          return (
+                            <option key={r.id} value={r.id}>
+                              {r.name} ({r.floor_label || 'Lantai 1'}) — Kapasitas {cap} Orang {tierInfo}
+                            </option>
+                          );
+                        })}
                       </select>
                       <button
                         onClick={handleReassignSave}

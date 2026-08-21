@@ -43,6 +43,8 @@ interface TrackedBooking {
   rejected_reason: string | null;
   cancelled_reason: string | null;
   package_label: string;
+  occupancy_label?: string | null;
+  occupancy_tier?: number | null;
   duration_days: number;
   can_extend: boolean;
   history: HistoryItem[];
@@ -304,8 +306,13 @@ function TrackBookingContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-label-sm text-outline uppercase tracking-wider">Paket Durasi</p>
-                    <p className="font-bold text-on-surface">{booking.package_label} ({booking.duration_days} Hari)</p>
+                    <p className="text-label-sm text-outline uppercase tracking-wider">Opsi Hunian & Paket</p>
+                    <p className="font-bold text-on-surface">
+                      {booking.occupancy_label || (booking.occupancy_tier === 1 ? 'Private 1 Kamar' : `Sharing ${booking.occupancy_tier || 3} Orang`)}
+                    </p>
+                    <p className="text-xs text-outline font-medium">
+                      Durasi: {booking.package_label} ({booking.duration_days} Hari)
+                    </p>
                   </div>
 
                   <div className="space-y-1 sm:col-span-2">

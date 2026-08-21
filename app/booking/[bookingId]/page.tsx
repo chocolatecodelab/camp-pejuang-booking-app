@@ -9,6 +9,8 @@ import { formatRupiah, getTodayStr, calculateCheckoutDate, formatDateRange, vali
 interface PricingPackage {
   id: string;
   label: string;
+  occupancy_label?: string | null;
+  occupancy_tier?: number;
   duration_days: number;
   price: number;
   min_dp_amount: number | null;
@@ -375,15 +377,20 @@ function BookingFormContent() {
               </div>
 
               <div className="space-y-1">
-                <p className="text-label-sm text-outline uppercase tracking-wider">Periode Sewa ({selectedPackage.label})</p>
-                <div className="p-2.5 bg-background-warm rounded-md border border-border-subtle text-xs font-semibold">
-                  {formatDateRange(checkInDate, checkOutDate)}
+                <p className="text-label-sm text-outline uppercase tracking-wider">Opsi Hunian & Durasi</p>
+                <div className="p-2.5 bg-background-warm rounded-md border border-border-subtle space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-xs text-on-surface">
+                      {selectedPackage.occupancy_label || (selectedPackage.occupancy_tier === 1 ? 'Private 1 Kamar' : `Sharing ${selectedPackage.occupancy_tier || 3} Orang`)}
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                      {selectedPackage.label} ({selectedPackage.duration_days} Hari)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-outline font-semibold">
+                    {formatDateRange(checkInDate, checkOutDate)}
+                  </p>
                 </div>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-label-sm text-outline uppercase tracking-wider">Durasi</p>
-                <p className="font-medium">{selectedPackage.duration_days} Hari</p>
               </div>
 
               <div className="border-t border-dashed border-border-subtle pt-4 space-y-2">

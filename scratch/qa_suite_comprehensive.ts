@@ -365,10 +365,59 @@ async function runComprehensiveAudit() {
     }
 
     // ------------------------------------------------------------------------
-    // MODULE 15: ADM-04 Tenant Check-Out & Lock Release
+    // MODULE 15: ADM-05 Admin Move Room (Multi-Occupancy Capacity & Tier Reset)
     // ------------------------------------------------------------------------
     console.log('\n------------------------------------------------------------------------');
-    console.log(' 1️⃣5️⃣ ADM-04: VERIFIKASI ADMIN CHECK-OUT TENANT & PELEPASAN KAMAR');
+    console.log(' 1️⃣5️⃣ ADM-05: VERIFIKASI ADMIN PINDAH KAMAR (MOVE ROOM) & SINKRONISASI TIER');
+    console.log('------------------------------------------------------------------------');
+    // Create Room 2 in the same camp
+    const { data: testRoom2, error: r2Err } = await supabaseAdmin.from('rooms').insert({
+      camp_id: testCampId!,
+      name: 'Kamar 102 QA Test',
+      floor_label: 'Lantai 1',
+      capacity: 3,
+      is_active: true
+    }).select().single();
+
+    if (r2Err || !testRoom2) {
+      recordFail('ADM-05', 'Move Room Setup', r2Err?.message || 'Failed creating target room');
+    } else {
+      // Reassign booking 1 to Room 2
+      await supabaseAdmin.from('bookings').update({ room_id: testRoom2.id }).eq('id', booking1Id!);
+      await supabaseAdmin.from('booking_locks').update({ room_id: testRoom2.id }).eq('booking_id', booking1Id!);
+
+      // Set target room tier lock
+      await supabaseAdmin.from('rooms').update({
+        active_occupancy_limit: 2,
+        active_occupancy_tier: 'Sharing 2 Orang'
+      }).eq('id', testRoom2.id);
+
+      // Reset source room tier since it has no remaining bookings
+      await supabaseAdmin.from('rooms').update({
+        active_occupancy_limit: null,
+        active_occupancy_tier: null
+      }).eq('id', testRoomId!);
+
+      // Check verification
+      const { data: verifiedRoom1 } = await supabaseAdmin.from('rooms').select('active_occupancy_tier').eq('id', testRoomId!).single();
+      const { data: verifiedRoom2 } = await supabaseAdmin.from('rooms').select('active_occupancy_tier').eq('id', testRoom2.id).single();
+      const { data: verifiedBooking1 } = await supabaseAdmin.from('bookings').select('room_id').eq('id', booking1Id!).single();
+
+      if (verifiedBooking1?.room_id === testRoom2.id && verifiedRoom1?.active_occupancy_tier === null && verifiedRoom2?.active_occupancy_tier === 'Sharing 2 Orang') {
+        recordPass('ADM-05', 'Move Room Verification', `Pindah ke "${testRoom2.name}" Sukses, Tier Kamar Asal Ter-reset (NULL), Kamar Baru Terkunci`);
+      } else {
+        recordFail('ADM-05', 'Move Room Verification', 'Room move or tier sync state mismatch');
+      }
+
+      // Cleanup room 2
+      await supabaseAdmin.from('rooms').delete().eq('id', testRoom2.id);
+    }
+
+    // ------------------------------------------------------------------------
+    // MODULE 16: ADM-04 Tenant Check-Out & Lock Release
+    // ------------------------------------------------------------------------
+    console.log('\n------------------------------------------------------------------------');
+    console.log(' 1️⃣6️⃣ ADM-04: VERIFIKASI ADMIN CHECK-OUT TENANT & PELEPASAN KAMAR');
     console.log('------------------------------------------------------------------------');
     await supabaseAdmin.from('bookings').update({ status: 'completed' }).eq('id', booking1Id!);
     await supabaseAdmin.from('booking_locks').delete().eq('booking_id', booking1Id!);
@@ -381,10 +430,10 @@ async function runComprehensiveAudit() {
     }
 
     // ------------------------------------------------------------------------
-    // MODULE 16: CLEAN-01 Cleanup
+    // MODULE 17: CLEAN-01 Cleanup
     // ------------------------------------------------------------------------
     console.log('\n------------------------------------------------------------------------');
-    console.log(' 1️⃣6️⃣ CLEAN-01: CLEANUP & GUARANTEE NO RESIDUAL TEST DATA');
+    console.log(' 1️⃣7️⃣ CLEAN-01: CLEANUP & GUARANTEE NO RESIDUAL TEST DATA');
     console.log('------------------------------------------------------------------------');
     if (booking1Id) {
       await supabaseAdmin.from('booking_status_history').delete().eq('booking_id', booking1Id);

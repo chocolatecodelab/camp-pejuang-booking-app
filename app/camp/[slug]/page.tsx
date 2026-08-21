@@ -49,37 +49,47 @@ interface BookingLock {
 
 function RoomCard({
   room,
-  occupiedCount,
   checkInDate,
-  durationLabel,
-  pkg,
-  floor
+  selectedDurationDays,
+  floor,
+  getOccupiedCount,
 }: {
   room: Room;
-  occupiedCount: number;
   checkInDate: string;
-  durationLabel: string;
-  pkg: any;
+  selectedDurationDays: number;
   floor: string;
+  getOccupiedCount: (roomId: string, durationDays?: number) => number;
 }) {
   const [activePhoto, setActivePhoto] = useState(0);
   const capacity = room.capacity || 1;
   const isMultiOccupancy = capacity > 1;
-  const remainingSlots = Math.max(0, capacity - occupiedCount);
-  const booked = remainingSlots === 0;
 
   // Available packages
   const availablePkgs = room.pricing_packages && room.pricing_packages.length > 0
     ? room.pricing_packages
-    : (pkg ? [pkg] : []);
+    : [];
 
-  const [selectedPkg, setSelectedPkg] = useState<PricingPackage | null>(
-    pkg || availablePkgs[0] || null
-  );
+  // Pre-select package matching selectedDurationDays or first package
+  const matchedPkg = selectedDurationDays > 0
+    ? (availablePkgs.find((p) => p.duration_days === selectedDurationDays) || availablePkgs[0])
+    : availablePkgs[0];
 
+  const [selectedPkg, setSelectedPkg] = useState<PricingPackage | null>(matchedPkg || null);
+
+  // When selectedDurationDays from top checker changes, sync selectedPkg
   useEffect(() => {
-    if (pkg) setSelectedPkg(pkg);
-  }, [pkg]);
+    if (selectedDurationDays > 0 && availablePkgs.length > 0) {
+      const found = availablePkgs.find((p) => p.duration_days === selectedDurationDays);
+      if (found) setSelectedPkg(found);
+    }
+  }, [selectedDurationDays, availablePkgs]);
+
+  const currentPkg = selectedPkg || matchedPkg || availablePkgs[0];
+  const activeDurationDays = currentPkg?.duration_days || selectedDurationDays || 30;
+
+  const occupiedCount = getOccupiedCount(room.id, activeDurationDays);
+  const remainingSlots = Math.max(0, capacity - occupiedCount);
+  const booked = remainingSlots === 0;
 
   const photos = room.room_photo_urls && room.room_photo_urls.length > 0
     ? room.room_photo_urls
@@ -93,8 +103,6 @@ function RoomCard({
     return () => clearInterval(timer);
   }, [photos.length]);
 
-  const currentPkg = selectedPkg || pkg;
-
   return (
     <div className="bg-surface-cream rounded-xl border border-border-subtle shadow-sm overflow-hidden flex flex-col h-full transition-all hover:shadow-md">
       <div className="aspect-[4/5] w-full bg-surface-container-high relative group select-none overflow-hidden">
@@ -104,26 +112,28 @@ function RoomCard({
           className="w-full h-full object-cover transition-all duration-300 hover:scale-105"
         />
 
-        {/* Capacity badge */}
-        <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-label-sm font-bold bg-black/70 text-white shadow-sm backdrop-blur-sm flex items-center gap-1">
-          <span className="material-symbols-outlined text-xs">bed</span>
-          {capacity > 1 ? `Kapasitas ${capacity} Bed` : 'Single Room'}
-        </span>
+        {/* Header Badges: Tipe & Status Keterisian (Flex Container agar tidak overlap) */}
+        <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-1.5 pointer-events-none z-10">
+          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/75 text-white shadow-md backdrop-blur-sm flex items-center gap-1 shrink-0">
+            <span className="material-symbols-outlined text-[13px]">{capacity > 1 ? 'group' : 'person'}</span>
+            {capacity > 1 ? `Sharing (Maks. ${capacity} Org)` : 'Private'}
+          </span>
 
-        {/* Status badge: Exact Occupancy Count */}
-        <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-label-sm font-bold shadow-sm ${
-          booked
-            ? 'bg-red-600 text-white shadow'
-            : occupiedCount > 0
-            ? 'bg-amber-500 text-white shadow'
-            : 'bg-emerald-600 text-white shadow'
-        }`}>
-          {booked
-            ? `🔴 Full Booked (${capacity}/${capacity})`
-            : occupiedCount > 0
-            ? `👥 Terisi ${occupiedCount}/${capacity} Bed (Sisa ${remainingSlots})`
-            : `🟢 Kosong (0/${capacity} Terisi)`}
-        </span>
+          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold shadow-md shrink-0 flex items-center gap-1 ${
+            booked
+              ? 'bg-red-600 text-white'
+              : occupiedCount > 0
+                ? 'bg-amber-500 text-white'
+                : 'bg-emerald-600 text-white'
+          }`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+            {booked
+              ? `Penuh (${capacity}/${capacity})`
+              : occupiedCount > 0
+                ? `Terisi ${occupiedCount}/${capacity} (Sisa ${remainingSlots})`
+                : `Kosong (0/${capacity})`}
+          </span>
+        </div>
 
         {/* Photo arrows */}
         {photos.length > 1 && (
@@ -158,16 +168,16 @@ function RoomCard({
             <div className="text-xs text-amber-800 bg-amber-50/90 p-2.5 rounded-lg border border-amber-200 space-y-0.5">
               <div className="font-bold flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">lock</span>
-                Kamar Terisi ({occupiedCount}/${capacity} Penghuni): {room.active_occupancy_tier}
+                Kamar Terisi ({occupiedCount}/${capacity} Orang): {room.active_occupancy_tier}
               </div>
               <p className="text-[11px] text-amber-700 leading-tight">
-                Sisa {remainingSlots} bed kosong otomatis mengikuti tarif {room.active_occupancy_tier}.
+                Sisa {remainingSlots} orang kosong otomatis mengikuti opsi {room.active_occupancy_tier}.
               </p>
             </div>
           ) : isMultiOccupancy && (
             <p className="text-[11px] text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1">
               <span className="material-symbols-outlined text-xs">tune</span>
-              Kamar kosong (0/{capacity}) — Bebas pilih opsi Sharing atau Private.
+              Kamar kosong (0/{capacity} Orang) — Bebas pilih opsi Sharing atau Private.
             </p>
           )}
         </div>
@@ -181,17 +191,20 @@ function RoomCard({
             <div className="flex flex-col gap-2">
               {availablePkgs.map((p) => {
                 const isSelected = currentPkg?.id === p.id;
-                
+
                 // Determine Occupancy Title
                 let titleText = p.occupancy_label && p.occupancy_label.trim() !== '' && p.occupancy_label !== p.label
                   ? p.occupancy_label
                   : p.occupancy_tier === 3
-                  ? 'Sharing 3 Orang'
-                  : p.occupancy_tier === 2
-                  ? 'Sharing 2 Orang'
-                  : p.occupancy_tier === 1
-                  ? 'Private 1 Kamar'
-                  : `Paket ${p.label}`;
+                    ? 'Sharing 3 Orang'
+                    : p.occupancy_tier === 2
+                      ? 'Sharing 2 Orang'
+                      : p.occupancy_tier === 1
+                        ? 'Private 1 Kamar'
+                        : `Paket ${p.label}`;
+
+                const targetCount = p.occupancy_tier || (titleText.includes('3') ? 3 : titleText.includes('2') ? 2 : 1);
+                const isPrivate = targetCount === 1 || titleText.toLowerCase().includes('private');
 
                 const durationLabelText = p.label && p.label !== p.occupancy_label ? p.label : `${p.duration_days} Hari`;
                 const durationText = `Durasi: ${durationLabelText} (${p.duration_days} Hari)`;
@@ -201,28 +214,38 @@ function RoomCard({
                     key={p.id}
                     type="button"
                     onClick={() => setSelectedPkg(p)}
-                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between group ${
-                      isSelected
-                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
-                        : 'border-border-subtle bg-white hover:bg-neutral-50'
-                    }`}
+                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between group ${isSelected
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
+                      : 'border-border-subtle bg-white hover:bg-neutral-50'
+                      }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected ? 'border-primary bg-primary text-white' : 'border-neutral-300'
-                      }`}>
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'border-primary bg-primary text-white' : 'border-neutral-300'
+                        }`}>
                         {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                       </div>
-                      <div>
-                        <p className="font-bold text-xs text-on-surface">
-                          {titleText}
-                        </p>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-bold text-xs text-on-surface">
+                            {titleText}
+                          </p>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border flex items-center gap-0.5 ${isPrivate
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : 'bg-primary/10 text-primary border-primary/20'
+                            }`}>
+                            <span className="material-symbols-outlined text-[10px]">group</span>
+                            {isPrivate ? '1 Kamar Sendiri' : `1 Kamar Isi ${targetCount} Orang`}
+                          </span>
+                        </div>
                         <p className="text-[10px] text-slate-500 font-medium">
                           {durationText} {p.min_dp_amount ? `• Bisa DP ${formatRupiah(p.min_dp_amount)}` : '• Bayar Lunas'}
                         </p>
                       </div>
                     </div>
-                    <span className="font-bold text-sm text-primary">{formatRupiah(p.price)}</span>
+                    <div className="text-right shrink-0 ml-2">
+                      <span className="font-bold text-sm text-primary block">{formatRupiah(p.price)}</span>
+                      <span className="text-[9px] text-slate-500 font-medium block">{isPrivate ? '/ kamar' : '/ orang'}</span>
+                    </div>
                   </button>
                 );
               })}
@@ -234,16 +257,16 @@ function RoomCard({
           {booked ? (
             <button
               disabled
-              className="w-full py-2.5 bg-surface-container text-outline rounded-md text-sm font-bold cursor-not-allowed text-center"
+              className="w-full py-3 bg-surface-container text-outline rounded-xl text-sm font-bold cursor-not-allowed text-center"
             >
-              Kamar Full Booked
+              Kamar Penuh
             </button>
           ) : (
             <Link
               href={`/booking/${room.id}?check_in=${checkInDate}&package_id=${currentPkg?.id || ''}`}
               className="w-full block py-3 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-container text-center transition-all shadow-sm hover:shadow-md"
             >
-              Pilih & Pesan Bed Ini
+              Pilih & Pesan Kamar Ini
             </Link>
           )}
         </div>
@@ -311,9 +334,9 @@ export default function CampDetailPage() {
   }, [slidesCount]);
 
   // Helper to calculate occupied slots count in a room on the selected dates
-  const getOccupiedCount = (roomId: string): number => {
+  const getOccupiedCount = (roomId: string, durationDays: number = selectedDurationDays || 30): number => {
     if (!checkInDate) return 0;
-    const checkOutDate = calculateCheckoutDate(checkInDate, selectedDurationDays);
+    const checkOutDate = calculateCheckoutDate(checkInDate, durationDays);
 
     const reqStart = new Date(checkInDate).getTime();
     const reqEnd = new Date(checkOutDate).getTime();
@@ -321,7 +344,7 @@ export default function CampDetailPage() {
     const roomLocks = locks.filter((l) => l.room_id === roomId);
     let count = 0;
     for (const lock of roomLocks) {
-      const matches = lock.stay_period.match(/[\[\(]([^,]+),([^\]\)]+)[\]\)]/);
+      const matches = lock.stay_period?.match(/[\[\(]([^,]+),([^\]\)]+)[\]\)]/);
       if (matches) {
         const lockStart = new Date(matches[1]).getTime();
         const lockEnd = new Date(matches[2]).getTime();
@@ -577,23 +600,16 @@ export default function CampDetailPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {roomsByFloor[floor].map((room) => {
-                  const occupiedCount = getOccupiedCount(room.id);
-                  const durationLabel = selectedDurationDays === 14 ? '2 Minggu (14 Hari)' : selectedDurationDays === 30 ? '1 Bulan (30 Hari)' : selectedDurationDays === 60 ? '2 Bulan (60 Hari)' : '3 Bulan (90 Hari)';
-                  const pkg = room.pricing_packages.find((p) => p.duration_days === selectedDurationDays || p.label.includes(String(selectedDurationDays))) || room.pricing_packages[0];
-
-                  return (
-                    <RoomCard
-                      key={room.id}
-                      room={room}
-                      occupiedCount={occupiedCount}
-                      checkInDate={checkInDate}
-                      durationLabel={durationLabel}
-                      pkg={pkg}
-                      floor={floor}
-                    />
-                  );
-                })}
+                {roomsByFloor[floor].map((room) => (
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    checkInDate={checkInDate}
+                    selectedDurationDays={selectedDurationDays}
+                    floor={floor}
+                    getOccupiedCount={getOccupiedCount}
+                  />
+                ))}
               </div>
             </div>
           ))}
@@ -602,7 +618,7 @@ export default function CampDetailPage() {
         {/* Call to Action: Masih Ragu / Tanya Admin */}
         <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-surface-cream rounded-2xl border border-primary/20 p-8 sm:p-10 shadow-sm relative overflow-hidden my-8">
           <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
-          
+
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center md:text-left">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/15 text-primary rounded-full text-xs font-bold">

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         id, name, floor_label,
         camps (id, name, slug, type)
       ),
-      pricing_packages (id, label, duration_days),
+      pricing_packages (id, label, occupancy_label, occupancy_tier, duration_days),
       booking_status_history (
         old_status, new_status, changed_by, reason, changed_at
       )
@@ -75,6 +75,8 @@ export async function GET(request: NextRequest) {
     rejected_reason: booking.rejected_reason,
     cancelled_reason: booking.cancelled_reason,
     package_label: (booking as any).pricing_packages?.label || '',
+    occupancy_label: (booking as any).pricing_packages?.occupancy_label || '',
+    occupancy_tier: (booking as any).pricing_packages?.occupancy_tier || null,
     duration_days: (booking as any).pricing_packages?.duration_days || 0,
     can_extend: canExtend,
     booking_id: booking.id,
